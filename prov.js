@@ -35,17 +35,47 @@ QualifiedName.prototype.toString = function() {
 };
 exports.QualifiedName = QualifiedName;
 
-// Element
-function Element() {
-	// This is an element
+
+// Namespace
+function Namespace(prefix, namespaceURI) {
+	this.prefix = prefix;
+	this.namespaceURI = namespaceURI;
 };
 
+Namespace.prototype.qname = function(localPart) {
+	var ret = new QualifiedName(this.prefix, localPart, this.namespaceURI);
+	return ret;
+};
+exports.Namespace = Namespace;
+
+// Literal and data types
+function Literal(value, datatype, langtag) {
+	this.value = value;
+	this.datatype = datatype;
+	this.langtag = langtag;
+};
+exports.Literal = Literal;
+
+
+// Element
+function Element(id, attr_value_pairs) {
+	this.id = id;
+	this.extra = [];
+	if (attr_value_pairs && attr_value_pairs.length) {
+		for (var i = 0; i < attr_value_pairs.length; i++) {
+			var pair = attr_value_pairs[i];
+			// TODO check the validity of attribute-value pair
+			this.extra.push(pair);
+		}
+	}
+};
 
 
 // Entity
 function Entity(id) {
-	this.id = id;
+	// This is an entity
 };
+Entity.prototype = new Element;
 Entity.prototype.toString = function() {
 	var ret = "entity(" + this.id + ")";
 	return ret;

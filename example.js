@@ -9,8 +9,9 @@ var prov = require("./prov");
 
 var baseURI = "http://www.example.org/";
 var uri = new prov.URI(baseURI + "e1");
-var qname1 = new prov.QualifiedName("ex", "e1", baseURI);
-var qname2 = new prov.QualifiedName("ex", "e2", baseURI);
+var ex = new prov.Namespace("ex", baseURI);
+var qname1 = ex.qname("e1");
+var qname2 = ex.qname("e2");
 
 console.log(uri.getURI());
 console.log(qname1.getURI());
