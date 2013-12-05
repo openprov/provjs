@@ -7,19 +7,16 @@
 
 var prov = require("./prov");
 
-var baseURI = "http://www.example.org/";
-var uri = new prov.URI(baseURI + "e1");
-var ex = new prov.Namespace("ex", baseURI);
-var qname1 = ex.qname("e1");
-var qname2 = ex.qname("e2");
+//Create a ProvJS Utility
+var pu = new prov.Utility;
 
-console.log(uri.getURI());
-console.log(qname1.getURI());
+// Register a namespace
+var ex = pu.addNamespace("ex", "http://www.example.org/");
 
-var e1 = new prov.Entity(qname1);
+var e1 = pu.entity("ex:e1");
 console.log(e1);
 
-var der1 = new prov.Derivation(qname2, qname1);
+var der1 = pu.wasDerivedFrom("ex2:e2", "ex:e1");
 console.log(der1);
 
 phantom.exit();

@@ -72,8 +72,8 @@ function Element(id, attr_value_pairs) {
 
 
 // Entity
-function Entity(id) {
-	// This is an entity
+function Entity(id, attr_value_pairs) {
+	Element.call(this, id, attr_value_pairs);
 };
 Entity.prototype = new Element;
 Entity.prototype.toString = function() {
@@ -93,3 +93,51 @@ Derivation.prototype.toString = function() {
 	return ret;
 };
 exports.Derivation = Derivation;
+
+
+function Document() {
+	// This is a provanance document
+}
+exports.Document = Document;
+
+
+// Utility class
+function Utility() {
+	// Keeping track of namespaces
+	// Convenient methods for generating PROV statements
+	// Construct a document
+	this.namespaces = {};
+};
+Utility.prototype.addNamespace = function(ns_or_prefix, uri) {
+	var ns;
+	if (ns_or_prefix instanceof Namespace)
+		ns = ns_or_prefix;
+	else 
+		ns = new Namespace(ns_or_prefix, uri);
+	this.namespaces[ns.prefix] = ns;
+	return ns;
+};
+Utility.prototype.getValidQualifiedName = function(id) {
+	if (id instanceof QualifiedName)
+		return id;
+
+	// If id_str has a colon (:), check if the part before the colon is a registered prefix
+	var components = id.split(":", 2);
+	if (components.length == 2) {
+		var prefix = components[0];
+		if (prefix in this.namespaces)
+			return this.namespaces[prefix].qname(components[1]);
+	}
+		
+	// TODO If a default namespace is registered, use it
+
+	console.error("Cannot validate identifier:", id);
+	return id;
+};
+Utility.prototype.entity = function(id, attr_value_pairs) {
+	return new Entity(this.getValidQualifiedName(id), attr_value_pairs);
+};
+Utility.prototype.wasDerivedFrom = function(generatedEntityID, usedEntityID) {
+	return new Derivation(this.getValidQualifiedName(generatedEntityID), this.getValidQualifiedName(usedEntityID));
+};
+exports.Utility = Utility;
