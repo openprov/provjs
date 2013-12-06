@@ -15,8 +15,10 @@ var ex = pu.addNamespace("ex", "http://www.example.org/");
 
 var e1 = pu.entity("ex:e1");
 console.log(e1);
+console.log(""+e1);
 
 var der1 = pu.wasDerivedFrom("ex2:e2", "ex:e1");
 console.log(der1);
+console.log(""+der1);
 
 phantom.exit();
