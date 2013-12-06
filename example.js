@@ -18,6 +18,7 @@ console.log(e1);
 console.log(""+e1);
 
 var der1 = pu.wasDerivedFrom("ex2:e2", "ex:e1");
+der1.attr(prov.ns.qname("type"), prov.ns.qname("Revision"));
 console.log(der1);
 console.log(""+der1);
 

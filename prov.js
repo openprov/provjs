@@ -90,9 +90,41 @@ exports.Entity = Entity;
 function Derivation(generatedEntityID, usedEntityID) {
 	this.generatedEntityID = generatedEntityID;
 	this.usedEntityID = usedEntityID;
+	this.attributes = [];
 }
+Derivation.prototype.get_attr = function(k)
+{
+	var result = [];
+	for(var i=0; i<this.attributes.length; i++) {
+		if (k.equals(this.attributes[i][0])) {
+			result.push(this.attributes[i][1]);
+		}
+	}
+	return(result);
+}
+Derivation.prototype.set_attr = function(k, v)
+{
+	this.attributes.push([k,v]);
+}
+
+Derivation.prototype.attr = function()
+{
+	var pos;
+	var l = arguments.length;
+	if (l == 1) {
+		return this.get_attr(arguments[0]);
+	} else {
+		for(pos=1; pos<l; pos+=2) {
+			this.set_attr(arguments[pos-1], arguments[pos]);
+		}
+		// TODO: flag wrong number of arguments
+		return this;
+	}
+};
 Derivation.prototype.toString = function() {
-	var ret = "wasDerivedFrom(" + this.generatedEntityID + ", " + this.usedEntityID + ")";
+	var attr = this.attributes.map(function(x){return x.join("=");});
+	if (attr!=="") { attr=", ["+attr+"]"; }
+	var ret = "wasDerivedFrom(" + this.generatedEntityID + ", " + this.usedEntityID + attr+")";
 	return ret;
 };
 exports.Derivation = Derivation;
