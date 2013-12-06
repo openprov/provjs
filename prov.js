@@ -141,3 +141,5 @@ Utility.prototype.wasDerivedFrom = function(generatedEntityID, usedEntityID) {
 	return new Derivation(this.getValidQualifiedName(generatedEntityID), this.getValidQualifiedName(usedEntityID));
 };
 exports.Utility = Utility;
+
+exports.ns = new Namespace("prov", "http://www.w3.org/ns/prov#");
