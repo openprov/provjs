@@ -172,8 +172,20 @@ Utility.prototype.getValidQualifiedName = function(id) {
 Utility.prototype.entity = function(id, attr_value_pairs) {
 	return new Entity(this.getValidQualifiedName(id), attr_value_pairs);
 };
-Utility.prototype.wasDerivedFrom = function(generatedEntityID, usedEntityID) {
-	return new Derivation(this.getValidQualifiedName(generatedEntityID), this.getValidQualifiedName(usedEntityID));
+Utility.prototype.wasDerivedFrom = function() {
+	var result;
+	if (arguments.length<2) {
+		return null;
+	}
+	result = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
+	if (arguments.length>2) {
+		// https://shifteleven.com/articles/2007/06/28/array-like-objects-in-javascript/
+		var args = Array.prototype.slice.call(arguments);
+		args.shift();
+		args.shift();
+		Derivation.prototype.attr.apply(result, args);
+	}
+	return(result);
 };
 exports.Utility = Utility;
 
