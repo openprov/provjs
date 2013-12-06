@@ -33,6 +33,9 @@ QualifiedName.prototype.toString = function() {
 	var ret = this.prefix + ":" + this.localPart;
 	return ret;
 };
+QualifiedName.prototype.equals = function(other) {
+	return ((other instanceof QualifiedName) && (this.uri==other.uri));
+};
 exports.QualifiedName = QualifiedName;
 
 
