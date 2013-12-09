@@ -6,8 +6,9 @@
  */
 
 
-// URI
+(function( window, undefined ) {
 
+// URI
 function URI(uri) {
 	this.uri = uri;
 };
@@ -15,8 +16,6 @@ function URI(uri) {
 URI.prototype.getURI = function() {
 	return this.uri;
 };
-
-exports.URI = URI;
 
 
 // PROV Qualified Name
@@ -36,7 +35,6 @@ QualifiedName.prototype.toString = function() {
 QualifiedName.prototype.equals = function(other) {
 	return ((other instanceof QualifiedName) && (this.uri==other.uri));
 };
-exports.QualifiedName = QualifiedName;
 
 
 // Namespace
@@ -49,7 +47,6 @@ Namespace.prototype.qname = function(localPart) {
 	var ret = new QualifiedName(this.prefix, localPart, this.namespaceURI);
 	return ret;
 };
-exports.Namespace = Namespace;
 
 // Literal and data types
 function Literal(value, datatype, langtag) {
@@ -57,12 +54,9 @@ function Literal(value, datatype, langtag) {
 	this.datatype = datatype;
 	this.langtag = langtag;
 };
-exports.Literal = Literal;
 
 // Record
-function Record()
-{
-	this.id = null;
+function Record() {
 	this.attributes = [];
 }
 Record.prototype.get_attr = function(k)
@@ -74,43 +68,46 @@ Record.prototype.get_attr = function(k)
 		}
 	}
 	return(result);
-}
-Record.prototype.set_attr = function(k, v)
-{
+};
+Record.prototype.set_attr = function(k, v){
+	// TODO Check for the existence of (k, v)
 	this.attributes.push([k,v]);
-}
+};
 
 // Element
 function Element(id) {
 	Record.call(this);
 	this.id = id;
 };
-Element.prototype = Object.create(Record.prototype);
+Element.prototype = new Record;
 Element.prototype.constructor = Element;
 
 // Entity
 function Entity(id) {
 	Element.call(this, id);
 };
-Entity.prototype = Object.create(Element.prototype);
+Entity.prototype = new Element;
 Entity.prototype.constructor = Entity;
 Entity.prototype.toString = function() {
 	var output = [];
-	output.push(""+this.id);
-	var attr = this.attributes.map(function(x){return x.join("=");}).join(", ");
-	if (attr!=="") { output.push("["+attr+"]"); }
+	output.push("" + this.id);
+	var attr = this.attributes.map(function(x) {
+		return x.join("=");
+		}).join(", ");
+	if (attr !== "") {
+		output.push("["+attr+"]");
+	}
 	return "entity(" + output.join(", ") + ")";
 };
-exports.Entity = Entity;
-// TODO: decide on wehther to support Plan
+// TODO: decide on whether to support Plan
 
 // TODO: Agent
 // Subclass Element
 
 // TODO: Activity
 // Subclass Element
-// starttime, endtime
-// TODO: decide on wehther to support Person, Organization, SoftwareAgent
+// startTime, endTime
+// TODO: decide on whether to support Person, Organization, SoftwareAgent
 
 // Relation
 function Relation()
@@ -120,9 +117,7 @@ function Relation()
 		this[this.relations[r]] = null;
 	}
 }
-// from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create
-// IE > 9
-Relation.prototype = Object.create(Record.prototype);
+Relation.prototype = new Record;
 Relation.prototype.constructor = Relation;
 Relation.prototype.toString = function() {
 	var that = this;
@@ -140,7 +135,7 @@ Relation.prototype.toString = function() {
 	var attr = this.attributes.map(function(x){return x.join("=");}).join(", ");
 	if (attr!=="") { output.push("["+attr+"]"); }
 	return this.relation_name + "(" + output.join(", ") + ")";
-}
+};
 
 // TODO: Generation
 // TODO: Usage
@@ -162,7 +157,6 @@ Derivation.prototype.relation_name = 'wasDerivedFrom';
 Derivation.prototype.from = 'generatedEntityID';
 Derivation.prototype.to = 'usedEntityID';
 
-exports.Derivation = Derivation;
 // TODO: decide on whether to support special cases for Revision, Quotation, PrimarySource
 
 // TODO: Attribution
@@ -178,17 +172,16 @@ exports.Derivation = Derivation;
 function Document() {
 	// This is a provanance document
 }
-exports.Document = Document;
 
 
 // Utility class
-function Utility() {
+function ProvJS() {
 	// Keeping track of namespaces
 	// Convenient methods for generating PROV statements
 	// Construct a document
 	this.namespaces = {};
 };
-Utility.prototype.addNamespace = function(ns_or_prefix, uri) {
+ProvJS.prototype.addNamespace = function(ns_or_prefix, uri) {
 	var ns;
 	if (ns_or_prefix instanceof Namespace)
 		ns = ns_or_prefix;
@@ -197,7 +190,7 @@ Utility.prototype.addNamespace = function(ns_or_prefix, uri) {
 	this.namespaces[ns.prefix] = ns;
 	return ns;
 };
-Utility.prototype.getValidQualifiedName = function(id) {
+ProvJS.prototype.getValidQualifiedName = function(id) {
 	if (id instanceof QualifiedName)
 		return id;
 
@@ -214,10 +207,10 @@ Utility.prototype.getValidQualifiedName = function(id) {
 	console.error("Cannot validate identifier:", id);
 	return id;
 };
-Utility.prototype.entity = function(id, attr_value_pairs) {
+ProvJS.prototype.entity = function(id, attr_value_pairs) {
 	return new Entity(this.getValidQualifiedName(id), attr_value_pairs);
 };
-Utility.prototype.wasDerivedFrom = function() {
+ProvJS.prototype.wasDerivedFrom = function() {
 	var result;
 	var l = arguments.length;
 	if (l<2) {
@@ -225,12 +218,24 @@ Utility.prototype.wasDerivedFrom = function() {
 	}
 	result = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
 	if (l>2) {
-		for(pos=3; pos<l; pos+=2) {
+		for(var pos=3; pos<l; pos+=2) {
 			result.set_attr(this.getValidQualifiedName(arguments[pos-1]), arguments[pos]);
 		}
 	}
 	return(result);
 };
-exports.Utility = Utility;
+ProvJS.prototype.ns = new Namespace("prov", "http://www.w3.org/ns/prov#");
 
-exports.ns = new Namespace("prov", "http://www.w3.org/ns/prov#");
+if (typeof module === "object" && module && typeof module.exports === "object") {
+	module.exports = new ProvJS;
+} else {
+	if (typeof define === "function" && define.amd) {
+		define( "prov", [], function () { return new ProvJS; } );
+	}
+}
+
+if (typeof window === "object" && typeof window.document === "object") {
+	window.prov = new ProvJS;
+}
+
+})(window);
