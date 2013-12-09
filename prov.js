@@ -85,14 +85,13 @@ Entity.prototype.toString = function() {
 };
 exports.Entity = Entity;
 
-
-// Derivation
-function Derivation(generatedEntityID, usedEntityID) {
-	this.generatedEntityID = generatedEntityID;
-	this.usedEntityID = usedEntityID;
+// Record
+function Record()
+{
+	this.id = null;
 	this.attributes = [];
 }
-Derivation.prototype.get_attr = function(k)
+Record.prototype.get_attr = function(k)
 {
 	var result = [];
 	for(var i=0; i<this.attributes.length; i++) {
@@ -102,16 +101,54 @@ Derivation.prototype.get_attr = function(k)
 	}
 	return(result);
 }
-Derivation.prototype.set_attr = function(k, v)
+Record.prototype.set_attr = function(k, v)
 {
 	this.attributes.push([k,v]);
 }
-Derivation.prototype.toString = function() {
+
+// Relation
+function Relation()
+{
+	Record.call(this);
+	for(r in this.relations) {
+		this[this.relations[r]] = null;
+	}
+}
+// from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create
+// IE > 9
+Relation.prototype = Object.create(Record.prototype);
+Relation.prototype.constructor = Relation;
+Relation.prototype.toString = function() {
+	var that = this;
+	var output = [];
+	if (this.id) {
+		output.push(""+this.id + ";" + this[this.from]);
+	} else {
+		output.push(this[this.from]);
+	}
+	output.push(this[this.to]);
+	var rel = this.relations.map(function(x){return (that[x])?that[x]:"";}).join(", ");
+	if (rel.split(", ").join("")!=="") {
+		output.push(rel);
+	}
 	var attr = this.attributes.map(function(x){return x.join("=");});
-	if (attr!=="") { attr=", ["+attr+"]"; }
-	var ret = "wasDerivedFrom(" + this.generatedEntityID + ", " + this.usedEntityID + attr+")";
-	return ret;
-};
+	if (attr!=="") { output.push("["+attr+"]"); }
+	return this.relation_name + "(" + output.join(", ") + ")";
+}
+
+// Derivation
+function Derivation(generatedEntityID, usedEntityID) {
+	Relation.call(this);
+	this.generatedEntityID = generatedEntityID;
+	this.usedEntityID = usedEntityID;
+}
+Derivation.prototype = Object.create(Relation.prototype);
+Derivation.prototype.constructor = Derivation;
+Derivation.prototype.relations = ['activity', 'generation', 'usage'];
+Derivation.prototype.relation_name = 'wasDerivedFrom';
+Derivation.prototype.from = 'generatedEntityID';
+Derivation.prototype.to = 'usedEntityID';
+
 exports.Derivation = Derivation;
 
 
