@@ -102,6 +102,15 @@ Entity.prototype.toString = function() {
 	return "entity(" + output.join(", ") + ")";
 };
 exports.Entity = Entity;
+// TODO: decide on wehther to support Plan
+
+// TODO: Agent
+// Subclass Element
+
+// TODO: Activity
+// Subclass Element
+// starttime, endtime
+// TODO: decide on wehther to support Person, Organization, SoftwareAgent
 
 // Relation
 function Relation()
@@ -133,6 +142,13 @@ Relation.prototype.toString = function() {
 	return this.relation_name + "(" + output.join(", ") + ")";
 }
 
+// TODO: Generation
+// TODO: Usage
+// TODO: Communication
+// TODO: Start
+// TODO: End
+// TODO: Invalidation
+//
 // Derivation
 function Derivation(generatedEntityID, usedEntityID) {
 	Relation.call(this);
@@ -147,7 +163,17 @@ Derivation.prototype.from = 'generatedEntityID';
 Derivation.prototype.to = 'usedEntityID';
 
 exports.Derivation = Derivation;
+// TODO: decide on whether to support special cases for Revision, Quotation, PrimarySource
 
+// TODO: Attribution
+// TODO: Association
+// TODO: Delegation
+// TODO: Influence
+// TODO: Alternate
+// TODO: Specialization
+// TODO: Membership
+
+// TODO: Bundles
 
 function Document() {
 	// This is a provanance document
