@@ -14,6 +14,7 @@ var pu = new prov.Utility;
 var ex = pu.addNamespace("ex", "http://www.example.org/");
 
 var e1 = pu.entity("ex:e1");
+e1.set_attr(ex.qname("foo"), ex.qname("bar"));
 console.log(e1);
 console.log(""+e1);
 

@@ -59,32 +59,6 @@ function Literal(value, datatype, langtag) {
 };
 exports.Literal = Literal;
 
-
-// Element
-function Element(id, attr_value_pairs) {
-	this.id = id;
-	this.extra = [];
-	if (attr_value_pairs && attr_value_pairs.length) {
-		for (var i = 0; i < attr_value_pairs.length; i++) {
-			var pair = attr_value_pairs[i];
-			// TODO check the validity of attribute-value pair
-			this.extra.push(pair);
-		}
-	}
-};
-
-
-// Entity
-function Entity(id, attr_value_pairs) {
-	Element.call(this, id, attr_value_pairs);
-};
-Entity.prototype = new Element;
-Entity.prototype.toString = function() {
-	var ret = "entity(" + this.id + ")";
-	return ret;
-};
-exports.Entity = Entity;
-
 // Record
 function Record()
 {
@@ -105,6 +79,29 @@ Record.prototype.set_attr = function(k, v)
 {
 	this.attributes.push([k,v]);
 }
+
+// Element
+function Element(id) {
+	Record.call(this);
+	this.id = id;
+};
+Element.prototype = Object.create(Record.prototype);
+Element.prototype.constructor = Element;
+
+// Entity
+function Entity(id) {
+	Element.call(this, id);
+};
+Entity.prototype = Object.create(Element.prototype);
+Entity.prototype.constructor = Entity;
+Entity.prototype.toString = function() {
+	var output = [];
+	output.push(""+this.id);
+	var attr = this.attributes.map(function(x){return x.join("=");}).join(", ");
+	if (attr!=="") { output.push("["+attr+"]"); }
+	return "entity(" + output.join(", ") + ")";
+};
+exports.Entity = Entity;
 
 // Relation
 function Relation()
@@ -131,7 +128,7 @@ Relation.prototype.toString = function() {
 	if (rel.split(", ").join("")!=="") {
 		output.push(rel);
 	}
-	var attr = this.attributes.map(function(x){return x.join("=");});
+	var attr = this.attributes.map(function(x){return x.join("=");}).join(", ");
 	if (attr!=="") { output.push("["+attr+"]"); }
 	return this.relation_name + "(" + output.join(", ") + ")";
 }
