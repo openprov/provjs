@@ -106,21 +106,6 @@ Derivation.prototype.set_attr = function(k, v)
 {
 	this.attributes.push([k,v]);
 }
-
-Derivation.prototype.attr = function()
-{
-	var pos;
-	var l = arguments.length;
-	if (l == 1) {
-		return this.get_attr(arguments[0]);
-	} else {
-		for(pos=1; pos<l; pos+=2) {
-			this.set_attr(arguments[pos-1], arguments[pos]);
-		}
-		// TODO: flag wrong number of arguments
-		return this;
-	}
-};
 Derivation.prototype.toString = function() {
 	var attr = this.attributes.map(function(x){return x.join("=");});
 	if (attr!=="") { attr=", ["+attr+"]"; }
@@ -174,16 +159,15 @@ Utility.prototype.entity = function(id, attr_value_pairs) {
 };
 Utility.prototype.wasDerivedFrom = function() {
 	var result;
-	if (arguments.length<2) {
+	var l = arguments.length;
+	if (l<2) {
 		return null;
 	}
 	result = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
-	if (arguments.length>2) {
-		// https://shifteleven.com/articles/2007/06/28/array-like-objects-in-javascript/
-		var args = Array.prototype.slice.call(arguments);
-		args.shift();
-		args.shift();
-		Derivation.prototype.attr.apply(result, args);
+	if (l>2) {
+		for(pos=3; pos<l; pos+=2) {
+			result.set_attr(this.getValidQualifiedName(arguments[pos-1]), arguments[pos]);
+		}
 	}
 	return(result);
 };

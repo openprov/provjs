@@ -18,11 +18,11 @@ console.log(e1);
 console.log(""+e1);
 
 var der1 = pu.wasDerivedFrom("ex:e2", "ex:e1");
-der1.attr(prov.ns.qname("type"), prov.ns.qname("Revision"));
+der1.set_attr(prov.ns.qname("type"), prov.ns.qname("Revision"));
 console.log(der1);
 console.log(""+der1);
 
-console.log(der1.attr(prov.ns.qname("type")));
+console.log(der1.get_attr(prov.ns.qname("type")));
 
 var der2 = pu.wasDerivedFrom("ex:e2", "ex:e1", prov.ns.qname("type"), prov.ns.qname("Revision"));
 console.log(der2);
