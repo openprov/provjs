@@ -26,7 +26,7 @@ function QualifiedName(prefix, localPart, namespaceURI) {
 	URI.call(this, namespaceURI + localPart);
 };
 
-QualifiedName.prototype = new URI;
+QualifiedName.prototype = Object.create(URI.prototype);
 QualifiedName.prototype.constructor = QualifiedName;
 QualifiedName.prototype.toString = function() {
 	var ret = this.prefix + ":" + this.localPart;
@@ -83,14 +83,14 @@ function Element(identifier) {
 	Record.call(this);
 	this.identifier = identifier;
 };
-Element.prototype = new Record;
+Element.prototype = Object.create(Record.prototype);
 Element.prototype.constructor = Element;
 
 // Entity
 function Entity(identifier) {
 	Element.call(this, identifier);
 };
-Entity.prototype = new Element;
+Entity.prototype = Object.create(Element.prototype);
 Entity.prototype.constructor = Entity;
 Entity.prototype.toString = function() {
 	var output = [];
@@ -121,7 +121,7 @@ function Relation()
 		this[this.relations[r]] = null;
 	}
 }
-Relation.prototype = new Record;
+Relation.prototype = Object.create(Record.prototype);
 Relation.prototype.constructor = Relation;
 Relation.prototype.toString = function() {
 	var that = this;
@@ -183,71 +183,84 @@ function Document() {
 	// This is a provanance document
 }
 
+var provNS = new Namespace("prov", "http://www.w3.org/ns/prov#");
+var xsdNS = new Namespace("xsd", "http://www.w3.org/2000/10/XMLSchema#");
 
 // Utility class
 function ProvJS() {
-	// Keeping track of namespaces
-	// Convenient methods for generating PROV statements
-	// Construct a document
-	this.namespaces = {
-		"prov": this.ns,
-	};
 };
-ProvJS.prototype.addNamespace = function(ns_or_prefix, uri) {
-	var ns;
-	if (ns_or_prefix instanceof Namespace)
-		ns = ns_or_prefix;
-	else 
-		ns = new Namespace(ns_or_prefix, uri);
-	this.namespaces[ns.prefix] = ns;
-	return ns;
-};
-ProvJS.prototype.getValidQualifiedName = function(identifier) {
-	if (identifier instanceof QualifiedName)
-		return identifier;
 
-	// If id_str has a colon (:), check if the part before the colon is a registered prefix
-	var components = identifier.split(":", 2);
-	if (components.length == 2) {
-		var prefix = components[0];
-		if (prefix in this.namespaces)
-			return this.namespaces[prefix].qname(components[1]);
-	}
+ProvJS.prototype = {
+	namespaces: {
+		"prov": provNS,
+		"xsd": xsdNS
+	},
+	ns: provNS,
 		
-	// TODO If a default namespace is registered, use it
+	constructor: ProvJS,
+	addNamespace: function(ns_or_prefix, uri) {
+		var ns;
+		if (ns_or_prefix instanceof Namespace)
+			ns = ns_or_prefix;
+		else 
+			ns = new Namespace(ns_or_prefix, uri);
+		this.namespaces[ns.prefix] = ns;
+		return ns;
+	},
+	getValidQualifiedName: function(identifier) {
+		if (identifier instanceof QualifiedName)
+			return identifier;
 
-	console.error("Cannot validate identifier:", identifier);
-	return identifier;
-};
-ProvJS.prototype.entity = function(identifier) {
-	return new Entity(this.getValidQualifiedName(identifier));
-};
-ProvJS.prototype.wasDerivedFrom = function() {
-	var result;
-	var l = arguments.length;
-	if (l < 2) {
-		return null;
-	}
-	result = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
-	if (l > 2) {
-		for (var pos = 3; pos < l; pos += 2) {
-			result.set_attr(this.getValidQualifiedName(arguments[pos - 1]), arguments[pos]);
+		// If id_str has a colon (:), check if the part before the colon is a registered prefix
+		var components = identifier.split(":", 2);
+		if (components.length == 2) {
+			var prefix = components[0];
+			if (prefix in this.namespaces)
+				return this.namespaces[prefix].qname(components[1]);
 		}
+			
+		// TODO If a default namespace is registered, use it
+
+		console.error("Cannot validate identifier:", identifier);
+		return identifier;
+	},
+	literal: function(value, datatype, langtag) {
+		var ret = new Literal(value, this.getValidQualifiedName(datatype), langtag);
+		return ret;
+	},
+	// PROV statements
+	entity: function(identifier) {
+		return new Entity(this.getValidQualifiedName(identifier));
+	},
+	wasDerivedFrom: function() {
+		var result;
+		var l = arguments.length;
+		if (l < 2) {
+			return null;
+		}
+		result = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
+		if (l > 2) {
+			for (var pos = 3; pos < l; pos += 2) {
+				result.set_attr(this.getValidQualifiedName(arguments[pos - 1]), arguments[pos]);
+			}
+		}
+		return result;
 	}
-	return result;
 };
-ProvJS.prototype.ns = new Namespace("prov", "http://www.w3.org/ns/prov#");
+
+// This is the default ProvJS object
+var rootProvJS = new ProvJS();
 
 if (typeof module === "object" && module && typeof module.exports === "object") {
-	module.exports = new ProvJS;
+	module.exports = rootProvJS;
 } else {
 	if (typeof define === "function" && define.amd) {
-		define( "prov", [], function () { return new ProvJS; } );
+		define( "prov", [], function () { return rootProvJS; } );
 	}
 }
 
 if (typeof window === "object" && typeof window.document === "object") {
-	window.prov = new ProvJS;
+	window.prov = rootProvJS;
 }
 
 })(window);
