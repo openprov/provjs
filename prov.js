@@ -53,6 +53,17 @@ function Literal(value, datatype, langtag) {
 	this.value = value;
 	this.datatype = datatype;
 	this.langtag = langtag;
+}
+Literal.prototype.constructor = Literal;
+Literal.prototype.toString = function()
+{
+	return(
+	'"' + this.value + '"' +
+	((this.langtag !== undefined) ?
+	('@'+ this.langtag)
+	:
+	('%%'+ this.datatype))
+	);
 };
 
 // Record
@@ -225,7 +236,30 @@ ProvJS.prototype = {
 		return identifier;
 	},
 	literal: function(value, datatype, langtag) {
-		var ret = new Literal(value, this.getValidQualifiedName(datatype), langtag);
+		if ((datatype===undefined) && (langtag==undefined)) {
+			if (typeof value === "string") {
+				datatype = xsdNS.qname("string");
+			} else
+			if (typeof value === 'number') {
+				if (Math.floor(value) === value) {
+					datatype = xsdNS.qname("int");
+				} else {
+					datatype = xsdNS.qname("float");
+				}
+			} else
+			if (typeof value === 'boolean') {
+					datatype = xsdNS.qname("boolean");
+			} else
+			if (value instanceof Date) {
+				value = value.toISOString();
+				datatype = xsdNS.qname("dateTime");
+			}
+		} else {
+			if (datatype!==undefined) {
+				datatype = this.getValidQualifiedName(datatype);
+			}
+		}
+		var ret = new Literal(value, datatype, langtag);
 		return ret;
 	},
 	// PROV statements
