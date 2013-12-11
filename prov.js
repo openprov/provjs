@@ -98,7 +98,8 @@ Record.prototype = {
 	},
 	get_attr: function(attr_name) {
 		var results = [];
-		for (var i = 0; i < this.attributes.length; i++) {
+		var i;
+		for (i = 0; i < this.attributes.length; i++) {
 			if (attr_name.equals(this.attributes[i][0])) {
 				results.push(this.attributes[i][1]);
 			}
@@ -125,7 +126,7 @@ Entity.prototype = Object.create(Element.prototype);
 Entity.prototype.constructor = Entity;
 Entity.prototype.toString = function() {
 	var output = [];
-	output.push("" + this.identifier);
+	output.push(String(this.identifier));
 	var attr = this.attributes.map(function(x) {
 		return x.join("=");
 		}).join(", ");
@@ -147,9 +148,10 @@ Entity.prototype.toString = function() {
 // Relation
 function Relation()
 {
+	var i;
 	Record.call(this);
-	for (var r in this.relations) {
-		this[this.relations[r]] = null;
+	for(i=0; i<this.relations.length; i++) {
+		this[this.relations[i]] = null;
 	}
 }
 Relation.prototype = Object.create(Record.prototype);
@@ -158,7 +160,7 @@ Relation.prototype.toString = function() {
 	var that = this;
 	var output = [];
 	if (this.identifier) {
-		output.push("" + this.identifier + "; " + this[this.from]);
+		output.push(String(this.identifier) + "; " + this[this.from]);
 	} else {
 		output.push(this[this.from]);
 	}
@@ -234,23 +236,26 @@ ProvJS.prototype = {
 	constructor: ProvJS,
 	addNamespace: function(ns_or_prefix, uri) {
 		var ns;
-		if (ns_or_prefix instanceof Namespace)
+		if (ns_or_prefix instanceof Namespace) {
 			ns = ns_or_prefix;
-		else 
+		} else {
 			ns = new Namespace(ns_or_prefix, uri);
+		}
 		this.namespaces[ns.prefix] = ns;
 		return ns;
 	},
 	getValidQualifiedName: function(identifier) {
-		if (identifier instanceof QualifiedName)
+		if (identifier instanceof QualifiedName) {
 			return identifier;
+		}
 
 		// If id_str has a colon (:), check if the part before the colon is a registered prefix
 		var components = identifier.split(":", 2);
-		if (components.length == 2) {
+		if (components.length === 2) {
 			var prefix = components[0];
-			if (prefix in this.namespaces)
+			if (prefix in this.namespaces) {
 				return this.namespaces[prefix].qname(components[1]);
+			}
 		}
 			
 		// TODO If a default namespace is registered, use it
