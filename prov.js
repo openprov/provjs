@@ -33,7 +33,7 @@ QualifiedName.prototype.toString = function() {
 	return ret;
 };
 QualifiedName.prototype.equals = function(other) {
-	return ((other instanceof QualifiedName) && (this.uri==other.uri));
+	return ((other instanceof QualifiedName) && (this.uri===other.uri));
 };
 
 
@@ -150,7 +150,7 @@ function Relation()
 	var i;
 	Record.call(this);
 	for(i=0; i<this.relations.length; i++) {
-		this[this.relations[i]] = null;
+		this[this.relations[i]] = undefined;
 	}
 }
 Relation.prototype = Object.create(Record.prototype);
@@ -294,7 +294,7 @@ ProvJS.prototype = {
 		var pos,result;
 		var l = arguments.length;
 		if (l < 2) {
-			return null;
+			return undefined;
 		}
 		result = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
 		if (l > 2) {
