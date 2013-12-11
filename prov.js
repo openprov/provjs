@@ -5,13 +5,15 @@
  * Licence: To be determined
  */
 
+/*jshint strict: true */
 
-(function( window, undefined ) {
+(function(window, undefined) {
+	"use strict";
 
 // URI
 function URI(uri) {
 	this.uri = uri;
-};
+}
 
 URI.prototype.getURI = function() {
 	return this.uri;
@@ -24,7 +26,7 @@ function QualifiedName(prefix, localPart, namespaceURI) {
 	this.localPart = localPart;
 	this.namespaceURI = namespaceURI;
 	URI.call(this, namespaceURI + localPart);
-};
+}
 
 QualifiedName.prototype = Object.create(URI.prototype);
 QualifiedName.prototype.constructor = QualifiedName;
@@ -41,7 +43,7 @@ QualifiedName.prototype.equals = function(other) {
 function Namespace(prefix, namespaceURI) {
 	this.prefix = prefix;
 	this.namespaceURI = namespaceURI;
-};
+}
 
 Namespace.prototype.qname = function(localPart) {
 	var ret = new QualifiedName(this.prefix, localPart, this.namespaceURI);
@@ -66,6 +68,11 @@ function Record() {
 	this.attributes = [];
 }
 Record.prototype = {
+	// Reference to the factory that created this record
+	creator: null,
+
+	/* GETTERS & SETTERS */
+	// Identifier
 	id: function(identifier) {
 		this.identifier = identifier;
 		return this;
@@ -73,10 +80,21 @@ Record.prototype = {
 	getId: function() {
 		return this.id;
 	},
-	set_attr: function(k, v){
+	
+	// TODO prov:label
+	// TODO prov:type
+	// TODO prov:value
+	// TODO prov:location
+	// TODO prov:role
+	
+	// Arbitrary attributes
+	attr: function(attr_name, attr_value) {
+		var name = this.creator ? this.creator.getValidQualifiedName(attr_name) : attr_name;
+		var value = this.creator ? this.creator.getValidLiteral(attr_value) : attr_value;
 		// TODO Check for the existence of (k, v)
 		// this.attributes should behave like a Set
-		this.attributes.push([k,v]);
+		this.attributes.push([name, value]);
+		return this;
 	},
 	get_attr: function(attr_name) {
 		var results = [];
@@ -87,7 +105,6 @@ Record.prototype = {
 		}
 		return results;
 	},
-	// TODO: setters and getters for prov:type, prov:label, prov:value, prov:location, prov:role
 };
  
 
@@ -96,14 +113,14 @@ Record.prototype = {
 function Element(identifier) {
 	Record.call(this);
 	this.identifier = identifier;
-};
+}
 Element.prototype = Object.create(Record.prototype);
 Element.prototype.constructor = Element;
 
 // Entity
 function Entity(identifier) {
 	Element.call(this, identifier);
-};
+}
 Entity.prototype = Object.create(Element.prototype);
 Entity.prototype.constructor = Entity;
 Entity.prototype.toString = function() {
@@ -131,7 +148,7 @@ Entity.prototype.toString = function() {
 function Relation()
 {
 	Record.call(this);
-	for(r in this.relations) {
+	for (var r in this.relations) {
 		this[this.relations[r]] = null;
 	}
 }
@@ -200,15 +217,18 @@ function Document() {
 var provNS = new Namespace("prov", "http://www.w3.org/ns/prov#");
 var xsdNS = new Namespace("xsd", "http://www.w3.org/2000/10/XMLSchema#");
 
-// Utility class
+// Factory class
 function ProvJS() {
-};
+	// The factory class
+}
 
 ProvJS.prototype = {
+	// All registered namespaces
 	namespaces: {
 		"prov": provNS,
 		"xsd": xsdNS
 	},
+	// The PROV namespace
 	ns: provNS,
 		
 	constructor: ProvJS,
@@ -239,7 +259,8 @@ ProvJS.prototype = {
 		return identifier;
 	},
 	literal: function(value, datatype, langtag) {
-		if ((datatype===undefined) && (langtag==undefined)) {
+		// Determine the data type for common types
+		if ((datatype === undefined) && (langtag === undefined)) {
 			if (typeof value === "string") {
 				datatype = xsdNS.qname("string");
 			} else
@@ -265,23 +286,32 @@ ProvJS.prototype = {
 		var ret = new Literal(value, datatype, langtag);
 		return ret;
 	},
+	getValidLiteral: function(literal) {
+		var ret = literal;
+		// TODO implement this function
+		return ret;
+	},
+
 	// PROV statements
 	entity: function(identifier) {
-		return new Entity(this.getValidQualifiedName(identifier));
+		var ret = new Entity(this.getValidQualifiedName(identifier));
+		ret.creator = this;
+		return ret;
 	},
 	wasDerivedFrom: function() {
-		var result;
+		var ret;
 		var l = arguments.length;
 		if (l < 2) {
 			return null;
 		}
-		result = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
+		ret = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
 		if (l > 2) {
 			for (var pos = 3; pos < l; pos += 2) {
-				result.set_attr(this.getValidQualifiedName(arguments[pos - 1]), arguments[pos]);
+				ret.attr(this.getValidQualifiedName(arguments[pos - 1]), arguments[pos]);
 			}
 		}
-		return result;
+		ret.creator = this;
+		return ret;
 	}
 	// TODO Collect all created records
 	// TODO Construct documents and bundles
