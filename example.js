@@ -14,7 +14,8 @@ var e1 = prov.entity("ex:e1");
 e1.attr("ex:foo", ex.qname("bar"))
   .attr("ex:baz", ["abc", "xsd:string"])
   .attr("ex:bah", ["1", "xsd:integer"])
-  .attr("ex:bam", ["bam", undefined, "en"]);
+  .attr("ex:bam", ["bam", undefined, "en"])
+  .attr("ex:bam", prov.literal("bam", undefined, "en"));
 console.log(e1);
 console.log("" + e1);
 
@@ -30,15 +31,18 @@ console.log(e2);
 var der1 = prov.wasDerivedFrom("ex:e2", "ex:e1")
 	.attr("prov:type", ["prov:Revision", "xsd:QName"])
 	.id(ex.qname('d1'));
+var der1 = prov.wasDerivedFrom("ex:e2", "ex:e1");
+der1.attr(prov.ns.qname("type"), prov.ns.qname("Revision"));
+der1.id(ex.qname('d1'));
 der1.activity = ex.qname('a1');
-der1.attr("prov:type", "prov:Revision");
+der1.attr(prov.ns.qname("type"), prov.ns.qname("Revision"));
 console.log(der1);
 console.log("" + der1);
 
 console.log(der1.getAttr("prov:type"));
 console.log(der1.attr("prov:type"));
 
-var der2 = prov.wasDerivedFrom("ex:e2", "ex:e1", "prov:type", "prov:Revision");
+var der2 = prov.wasDerivedFrom("ex:e2", "ex:e1", "prov:type", prov.ns.qname("Revision"));
 console.log(der2);
 console.log("" + der2);
 

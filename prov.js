@@ -35,7 +35,7 @@ QualifiedName.prototype.toString = function() {
 	return ret;
 };
 QualifiedName.prototype.equals = function(other) {
-	return ((other instanceof QualifiedName) && (this.uri==other.uri));
+	return ((other instanceof QualifiedName) && (this.uri===other.uri));
 };
 
 
@@ -63,6 +63,13 @@ Literal.prototype.toString = function() {
 	return ('"' + this.value + '"' +
 			((this.langtag !== undefined) ? ('@' + this.langtag) : (' %% ' + this.datatype)));
 };
+Literal.prototype.equals = function(other) {
+	// TODO check whether this is correct or is too strict
+	return (   (other instanceof Literal)
+	        && (this.value===other.value)
+	        && (this.datatype===other.datatype)
+	        && (this.langtag===other.langtag) );
+};
 
 // Record
 function Record() {
@@ -81,7 +88,20 @@ Record.prototype = {
 	getId: function() {
 		return this.id;
 	},
-	
+	set_attr: function(k, v){
+		var i;
+		var existing = false;
+		var values = this.getAttr(k);
+		for(i=0; i<values.length; i++) {
+			if (v.equals(values[i])) {
+				existing = true;
+				continue;
+			}
+		}
+		if (!existing) {
+			this.attributes.push([k,v]);
+		}
+	},
 	// TODO prov:label
 	// TODO prov:type
 	// TODO prov:value
@@ -97,9 +117,7 @@ Record.prototype = {
 		
 		var name = this.creator ? this.creator.getValidQualifiedName(attr_name) : attr_name;
 		var value = this.creator ? this.creator.getValidLiteral(attr_value) : attr_value;
-		// TODO Check for the existence of (k, v)
-		// this.attributes should behave like a Set
-		this.attributes.push([name, value]);
+		this.set_attr(name, value);
 		return this;
 	},
 	getAttr: function(attr_name) {
@@ -157,7 +175,7 @@ function Relation()
 	var i;
 	Record.call(this);
 	for(i=0; i<this.relations.length; i++) {
-		this[this.relations[i]] = null;
+		this[this.relations[i]] = undefined;
 	}
 }
 Relation.prototype = Object.create(Record.prototype);
@@ -333,7 +351,7 @@ ProvJS.prototype = {
 		var ret;
 		var l = arguments.length;
 		if (l < 2) {
-			return null;
+			return undefined;
 		}
 		ret = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
 		if (l > 2) {
