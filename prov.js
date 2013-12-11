@@ -111,9 +111,7 @@ Record.prototype = {
 	attr: function(attr_name, attr_value) {
 		var name = this.creator ? this.creator.getValidQualifiedName(attr_name) : attr_name;
 		var value = this.creator ? this.creator.getValidLiteral(attr_value) : attr_value;
-		// TODO Check for the existence of (k, v)
-		// this.attributes should behave like a Set
-		this.attributes.push([name, value]);
+		this.set_attr(name, value);
 		return this;
 	},
 	get_attr: function(attr_name) {
