@@ -60,6 +60,13 @@ Literal.prototype.toString = function() {
 	return ('"' + this.value + '"' +
 			((this.langtag !== undefined) ? ('@' + this.langtag) : (' %% ' + this.datatype)));
 };
+Literal.prototype.equals = function(other) {
+	// TODO check whether this is correct or is too strict
+	return (   (other instanceof Literal)
+	        && (this.value===other.value)
+	        && (this.datatype===other.datatype)
+	        && (this.langtag===other.langtag) );
+};
 
 // Record
 function Record() {
@@ -74,9 +81,18 @@ Record.prototype = {
 		return this.id;
 	},
 	set_attr: function(k, v){
-		// TODO Check for the existence of (k, v)
-		// this.attributes should behave like a Set
-		this.attributes.push([k,v]);
+		var i;
+		var existing = false;
+		var values = this.get_attr(k);
+		for(i=0; i<values.length; i++) {
+			if (v.equals(values[i])) {
+				existing = true;
+				continue;
+			}
+		}
+		if (!existing) {
+			this.attributes.push([k,v]);
+		}
 	},
 	get_attr: function(attr_name) {
 		var results = [];
