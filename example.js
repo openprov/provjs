@@ -12,30 +12,31 @@ var ex = prov.addNamespace("ex", "http://www.example.org/");
 
 var e1 = prov.entity("ex:e1");
 e1.attr("ex:foo", ex.qname("bar"))
-  .attr("ex:baz", prov.literal("abc", prov.namespaces.xsd.qname("string")))
-  .attr("ex:bah", prov.literal("1", prov.namespaces.xsd.qname("integer")))
-  .attr("ex:bam", prov.literal("bam", undefined, "en"));
+  .attr("ex:baz", ["abc", "xsd:string"])
+  .attr("ex:bah", ["1", "xsd:integer"])
+  .attr("ex:bam", ["bam", undefined, "en"]);
 console.log(e1);
 console.log("" + e1);
 
-var e2 = prov.entity("ex:e2").
-	attr(ex.qname("dat"), prov.literal(new Date(Date.now())));
-e2.attr(ex.qname("int"), prov.literal(1));
-e2.attr(ex.qname("nint"), prov.literal(-1));
-e2.attr(ex.qname("flt"), prov.literal(1.02));
-e2.attr(ex.qname("str"), prov.literal("def"));
-e2.attr(ex.qname("bool"), prov.literal(true));
+var e2 = prov.entity("ex:e2")
+	.attr("ex:dat", new Date(Date.now()))
+	.attr("ex:int", 1)
+	.attr("ex:nint", -1)
+	.attr("ex:flt", 1.02)
+	.attr("ex:str", "def")
+	.attr("ex:bool", true);
 console.log(e2);
 
-var der1 = prov.wasDerivedFrom("ex:e2", "ex:e1");
-der1.attr("prov:type", "prov:Revision");
-der1.id(ex.qname('d1'));
+var der1 = prov.wasDerivedFrom("ex:e2", "ex:e1")
+	.attr("prov:type", ["prov:Revision", "xsd:QName"])
+	.id(ex.qname('d1'));
 der1.activity = ex.qname('a1');
 der1.attr("prov:type", "prov:Revision");
 console.log(der1);
 console.log("" + der1);
 
-console.log(der1.get_attr(prov.ns.qname("type")));
+console.log(der1.getAttr("prov:type"));
+console.log(der1.attr("prov:type"));
 
 var der2 = prov.wasDerivedFrom("ex:e2", "ex:e1", "prov:type", "prov:Revision");
 console.log(der2);

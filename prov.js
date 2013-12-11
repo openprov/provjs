@@ -59,6 +59,7 @@ function Literal(value, datatype, langtag) {
 Literal.prototype.constructor = Literal;
 Literal.prototype.toString = function() {
 	// TODO Suport for multi-line strings (triple-quoted)
+	// TODO Check for special notation for some data types in PROV-N (e.g. QName)
 	return ('"' + this.value + '"' +
 			((this.langtag !== undefined) ? ('@' + this.langtag) : (' %% ' + this.datatype)));
 };
@@ -89,6 +90,11 @@ Record.prototype = {
 	
 	// Arbitrary attributes
 	attr: function(attr_name, attr_value) {
+		// Overloading this with getter behaviour
+		if (attr_value === undefined) {
+			return this.getAttr(attr_name);
+		}
+		
 		var name = this.creator ? this.creator.getValidQualifiedName(attr_name) : attr_name;
 		var value = this.creator ? this.creator.getValidLiteral(attr_value) : attr_value;
 		// TODO Check for the existence of (k, v)
@@ -96,11 +102,11 @@ Record.prototype = {
 		this.attributes.push([name, value]);
 		return this;
 	},
-	get_attr: function(attr_name) {
+	getAttr: function(attr_name) {
+		var name = this.creator ? this.creator.getValidQualifiedName(attr_name) : attr_name;
 		var results = [];
-		var i;
-		for (i = 0; i < this.attributes.length; i++) {
-			if (attr_name.equals(this.attributes[i][0])) {
+		for (var i = 0; i < this.attributes.length; i++) {
+			if (name.equals(this.attributes[i][0])) {
 				results.push(this.attributes[i][1]);
 			}
 		}
@@ -218,6 +224,7 @@ function Document() {
 
 var provNS = new Namespace("prov", "http://www.w3.org/ns/prov#");
 var xsdNS = new Namespace("xsd", "http://www.w3.org/2000/10/XMLSchema#");
+xsdNS.QName = xsdNS.qname("QName");
 
 // Factory class
 function ProvJS() {
@@ -266,6 +273,7 @@ ProvJS.prototype = {
 	literal: function(value, datatype, langtag) {
 		// Determine the data type for common types
 		if ((datatype === undefined) && (langtag === undefined)) {
+			// Missing both datatype and langtag
 			if (typeof value === "string") {
 				datatype = xsdNS.qname("string");
 			} else
@@ -282,18 +290,36 @@ ProvJS.prototype = {
 			if (value instanceof Date) {
 				value = value.toISOString();
 				datatype = xsdNS.qname("dateTime");
+			} else
+			if (value instanceof QualifiedName) {
+				datatype = xsdNS.QName;
 			}
 		} else {
-			if (datatype!==undefined) {
+			if (datatype !== undefined) {
 				datatype = this.getValidQualifiedName(datatype);
+				
+				if (datatype.equals(xsdNS.QName)) {
+					// Try to ensure a QualifiedName value
+					value = this.getValidQualifiedName(value);
+				}
 			}
+			// TODO Handle with langtag and undefined datatype
 		}
 		var ret = new Literal(value, datatype, langtag);
 		return ret;
 	},
 	getValidLiteral: function(literal) {
-		var ret = literal;
-		// TODO implement this function
+		if (literal instanceof Literal) {
+			return literal;
+		}
+		var ret;
+		if (Array.isArray(literal)) {
+			// Accepting literal as an array of [value, datatype, lang]
+			ret = this.literal.apply(this, literal);
+		}
+		else
+			// Accepting literal as a simple-type value 
+			ret = this.literal(literal);
 		return ret;
 	},
 
