@@ -55,39 +55,42 @@ function Literal(value, datatype, langtag) {
 	this.langtag = langtag;
 }
 Literal.prototype.constructor = Literal;
-Literal.prototype.toString = function()
-{
-	return(
-	'"' + this.value + '"' +
-	((this.langtag !== undefined) ?
-	('@'+ this.langtag)
-	:
-	('%%'+ this.datatype))
-	);
+Literal.prototype.toString = function() {
+	// TODO Suport for multi-line strings (triple-quoted)
+	return ('"' + this.value + '"' +
+			((this.langtag !== undefined) ? ('@' + this.langtag) : (' %% ' + this.datatype)));
 };
 
 // Record
 function Record() {
 	this.attributes = [];
 }
-Record.prototype.id = function(identifier) {
-	this.identifier = identifier;
-	return this;
-};
-Record.prototype.get_attr = function(k)
-{
-	var result = [];
-	for(var i=0; i<this.attributes.length; i++) {
-		if (k.equals(this.attributes[i][0])) {
-			result.push(this.attributes[i][1]);
+Record.prototype = {
+	id: function(identifier) {
+		this.identifier = identifier;
+		return this;
+	},
+	getId: function() {
+		return this.id;
+	},
+	set_attr: function(k, v){
+		// TODO Check for the existence of (k, v)
+		// this.attributes should behave like a Set
+		this.attributes.push([k,v]);
+	},
+	get_attr: function(attr_name) {
+		var results = [];
+		for (var i = 0; i < this.attributes.length; i++) {
+			if (attr_name.equals(this.attributes[i][0])) {
+				results.push(this.attributes[i][1]);
+			}
 		}
-	}
-	return(result);
+		return results;
+	},
+	// TODO: setters and getters for prov:type, prov:label, prov:value, prov:location, prov:role
 };
-Record.prototype.set_attr = function(k, v){
-	// TODO Check for the existence of (k, v)
-	this.attributes.push([k,v]);
-};
+ 
+
 
 // Element
 function Element(identifier) {
@@ -280,20 +283,26 @@ ProvJS.prototype = {
 		}
 		return result;
 	}
+	// TODO Collect all created records
+	// TODO Construct documents and bundles
 };
 
 // This is the default ProvJS object
 var rootProvJS = new ProvJS();
 
+// Registering the prov object with the environment
 if (typeof module === "object" && module && typeof module.exports === "object") {
+	// Common.JS environments (e.g. node.js, PhantomJS)
 	module.exports = rootProvJS;
 } else {
+	// Asynchronous module definition (AMD)
 	if (typeof define === "function" && define.amd) {
 		define( "prov", [], function () { return rootProvJS; } );
 	}
 }
 
 if (typeof window === "object" && typeof window.document === "object") {
+	// Browser environments
 	window.prov = rootProvJS;
 }
 

@@ -25,7 +25,7 @@ e2.set_attr(ex.qname("nint"), prov.literal(-1));
 e2.set_attr(ex.qname("flt"), prov.literal(1.02));
 e2.set_attr(ex.qname("str"), prov.literal("def"));
 e2.set_attr(ex.qname("bool"), prov.literal(true));
-e.log(e2);
+console.log(e2);
 
 var der1 = prov.wasDerivedFrom("ex:e2", "ex:e1");
 der1.set_attr("prov:type", "prov:Revision");
