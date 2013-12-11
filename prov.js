@@ -5,8 +5,10 @@
  * Licence: To be determined
  */
 
+/*jshint strict: true */
 
-(function( window, undefined ) {
+(function(window, undefined) {
+	"use strict";
 
 // URI
 function URI(uri) {
@@ -73,6 +75,11 @@ function Record() {
 	this.attributes = [];
 }
 Record.prototype = {
+	// Reference to the factory that created this record
+	creator: null,
+
+	/* GETTERS & SETTERS */
+	// Identifier
 	id: function(identifier) {
 		this.identifier = identifier;
 		return this;
@@ -94,6 +101,21 @@ Record.prototype = {
 			this.attributes.push([k,v]);
 		}
 	},
+	// TODO prov:label
+	// TODO prov:type
+	// TODO prov:value
+	// TODO prov:location
+	// TODO prov:role
+	
+	// Arbitrary attributes
+	attr: function(attr_name, attr_value) {
+		var name = this.creator ? this.creator.getValidQualifiedName(attr_name) : attr_name;
+		var value = this.creator ? this.creator.getValidLiteral(attr_value) : attr_value;
+		// TODO Check for the existence of (k, v)
+		// this.attributes should behave like a Set
+		this.attributes.push([name, value]);
+		return this;
+	},
 	get_attr: function(attr_name) {
 		var results = [];
 		var i;
@@ -104,7 +126,6 @@ Record.prototype = {
 		}
 		return results;
 	},
-	// TODO: setters and getters for prov:type, prov:label, prov:value, prov:location, prov:role
 };
  
 
@@ -218,15 +239,18 @@ function Document() {
 var provNS = new Namespace("prov", "http://www.w3.org/ns/prov#");
 var xsdNS = new Namespace("xsd", "http://www.w3.org/2000/10/XMLSchema#");
 
-// Utility class
+// Factory class
 function ProvJS() {
+	// The factory class
 }
 
 ProvJS.prototype = {
+	// All registered namespaces
 	namespaces: {
 		"prov": provNS,
 		"xsd": xsdNS
 	},
+	// The PROV namespace
 	ns: provNS,
 		
 	constructor: ProvJS,
@@ -260,7 +284,8 @@ ProvJS.prototype = {
 		return identifier;
 	},
 	literal: function(value, datatype, langtag) {
-		if ((datatype===undefined) && (langtag===undefined)) {
+		// Determine the data type for common types
+		if ((datatype === undefined) && (langtag === undefined)) {
 			if (typeof value === "string") {
 				datatype = xsdNS.qname("string");
 			} else
@@ -286,23 +311,32 @@ ProvJS.prototype = {
 		var ret = new Literal(value, datatype, langtag);
 		return ret;
 	},
+	getValidLiteral: function(literal) {
+		var ret = literal;
+		// TODO implement this function
+		return ret;
+	},
+
 	// PROV statements
 	entity: function(identifier) {
-		return new Entity(this.getValidQualifiedName(identifier));
+		var ret = new Entity(this.getValidQualifiedName(identifier));
+		ret.creator = this;
+		return ret;
 	},
 	wasDerivedFrom: function() {
-		var pos,result;
+		var ret;
 		var l = arguments.length;
 		if (l < 2) {
 			return undefined;
 		}
-		result = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
+		ret = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
 		if (l > 2) {
-			for (pos = 3; pos < l; pos += 2) {
-				result.set_attr(this.getValidQualifiedName(arguments[pos - 1]), arguments[pos]);
+			for (var pos = 3; pos < l; pos += 2) {
+				ret.attr(this.getValidQualifiedName(arguments[pos - 1]), arguments[pos]);
 			}
 		}
-		return result;
+		ret.creator = this;
+		return ret;
 	}
 	// TODO Collect all created records
 	// TODO Construct documents and bundles
