@@ -28,10 +28,10 @@ e2.set_attr(ex.qname("bool"), prov.literal(true));
 console.log(e2);
 
 var der1 = prov.wasDerivedFrom("ex:e2", "ex:e1");
-der1.set_attr("prov:type", "prov:Revision");
+der1.set_attr(prov.ns.qname("type"), prov.ns.qname("Revision"));
 der1.id(ex.qname('d1'));
 der1.activity = ex.qname('a1');
-der1.set_attr("prov:type", "prov:Revision");
+der1.set_attr(prov.ns.qname("type"), prov.ns.qname("Revision"));
 console.log(der1);
 console.log("" + der1);
 
