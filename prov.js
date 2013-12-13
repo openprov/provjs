@@ -250,6 +250,15 @@ function ProvJS() {
 }
 
 ProvJS.prototype = {
+	URI: URI,
+	QualifiedName: QualifiedName,
+	Literal: Literal,
+	Record: Record,
+	Element: Element,
+	Entity: Entity,
+	Relation: Relation,
+	Derivation: Derivation,
+
 	// All registered namespaces
 	namespaces: {
 		"prov": provNS,
