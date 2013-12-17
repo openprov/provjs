@@ -79,9 +79,6 @@ function Record() {
 	this.attributes = [];
 }
 Record.prototype = {
-	// Reference to the factory that created this record
-	creator: null,
-
 	/* GETTERS & SETTERS */
 	// Identifier
 	id: function(identifier) {
@@ -112,22 +109,10 @@ Record.prototype = {
 	// TODO prov:role
 	
 	// Arbitrary attributes
-	attr: function(attr_name, attr_value) {
-		// Overloading this with getter behaviour
-		if (attr_value === undefined) {
-			return this.getAttr(attr_name);
-		}
-		
-		var name = this.creator ? this.creator.getValidQualifiedName(attr_name) : attr_name;
-		var value = this.creator ? this.creator.getValidLiteral(attr_value) : attr_value;
-		this.set_attr(name, value);
-		return this;
-	},
 	getAttr: function(attr_name) {
-		var name = this.creator ? this.creator.getValidQualifiedName(attr_name) : attr_name;
 		var results = [];
 		for (var i = 0; i < this.attributes.length; i++) {
-			if (name.equals(this.attributes[i][0])) {
+			if (attr_name.equals(this.attributes[i][0])) {
 				results.push(this.attributes[i][1]);
 			}
 		}
@@ -378,7 +363,6 @@ ProvJS.prototype = {
 	// PROV statements
 	entity: function(identifier) {
 		var ret = new Entity(this.getValidQualifiedName(identifier));
-		ret.creator = this;
 		return ret;
 	},
 	wasDerivedFrom: function() {
@@ -390,10 +374,9 @@ ProvJS.prototype = {
 		ret = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
 		if (l > 2) {
 			for (var pos = 3; pos < l; pos += 2) {
-				ret.attr(this.getValidQualifiedName(arguments[pos - 1]), arguments[pos]);
+				ret.set_attr(this.getValidQualifiedName(arguments[pos - 1]), this.getValidLiteral(arguments[pos]));
 			}
 		}
-		ret.creator = this;
 		return ret;
 	}
 	// TODO Collect all created records
