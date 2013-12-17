@@ -256,6 +256,7 @@ xsdNS.QName = xsdNS.qname("QName");
 // Factory class
 function ProvJS() {
 	// The factory class
+	this.wrap = new Array();
 }
 
 ProvJS.prototype = {
@@ -363,7 +364,34 @@ ProvJS.prototype = {
 	// PROV statements
 	entity: function(identifier) {
 		var ret = new Entity(this.getValidQualifiedName(identifier));
-		return ret;
+		this.pushContext(ret);
+		return this;
+	},
+	attr: function(attr_name, attr_value) {
+		// Overloading this with getter behaviour
+		var context = this.getContext();
+		if (context===undefined) {
+			return(undefined);
+		}
+		if (attr_value === undefined) {
+			return context.getAttr(this.getValidQualifiedName(attr_name));
+		}
+		var name = this.getValidQualifiedName(attr_name);
+		var value = this.getValidLiteral(attr_value);
+		context.set_attr(name, value);
+		return this;
+	},
+	id: function() {
+		var context = this.getContext();
+		if (context===undefined) {
+			return(undefined);
+		}
+		if (arguments.length==0) {
+			return context.id();
+		} else {
+			context.id(this.getValidQualifiedName(arguments[0]));
+			return(this);
+		}
 	},
 	wasDerivedFrom: function() {
 		var ret;
@@ -377,9 +405,24 @@ ProvJS.prototype = {
 				ret.set_attr(this.getValidQualifiedName(arguments[pos - 1]), this.getValidLiteral(arguments[pos]));
 			}
 		}
-		return ret;
-	}
+		this.pushContext(ret);
+		return this;
+	},
 	// TODO Collect all created records
+	toString: function() {
+		return 'ProvJS('+this.wrap.join(", ")+')';
+	},
+	pushContext: function(o) {
+		this.wrap.push(o);
+	},
+	getContext: function() {
+		var l = this.wrap.length;
+		if (l===0) {
+			return undefined;
+		} else {
+			return this.wrap[l-1];
+		}
+	},
 	// TODO Construct documents and bundles
 };
 
