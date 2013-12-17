@@ -212,17 +212,17 @@ Relation.prototype.toString = function() {
 // TODO: Invalidation
 //
 // Derivation
-function Derivation(generatedEntityID, usedEntityID) {
+function Derivation(generatedEntity, usedEntity) {
 	Relation.call(this);
-	this.generatedEntityID = generatedEntityID;
-	this.usedEntityID = usedEntityID;
+	this.generatedEntity = generatedEntity;
+	this.usedEntity = usedEntity;
 }
 Derivation.prototype = Object.create(Relation.prototype);
 Derivation.prototype.constructor = Derivation;
 Derivation.prototype.relations = ['activity', 'generation', 'usage'];
 Derivation.prototype.relation_name = 'wasDerivedFrom';
-Derivation.prototype.from = 'generatedEntityID';
-Derivation.prototype.to = 'usedEntityID';
+Derivation.prototype.from = 'generatedEntity';
+Derivation.prototype.to = 'usedEntity';
 
 // TODO: decide on whether to support special cases for Revision, Quotation, PrimarySource
 
