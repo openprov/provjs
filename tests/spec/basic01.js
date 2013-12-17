@@ -15,11 +15,10 @@ describe("Basic QualifiedName", function() {
 		expect(qname1.equals(qname2)).toBeTruthy();
 		expect(qname2.equals(qname1)).toBeTruthy();
 	});
-	it("QualifiedName not equals prefix", function() {
+	it("QualifiedName equals different prefix", function() {
 		var qname1 = new prov.QualifiedName("ex", "foo", "http://www.example.com/");
 		var qname2 = new prov.QualifiedName("fu", "foo", "http://www.example.com/");
-		expect(qname1.equals(qname2)).toBeFalsy();
-		// TODO: Not sure if this should be true or false
+		expect(qname1.equals(qname2)).toBeTruthy();
 	});
 	it("QualifiedName not equals localpart", function() {
 		var qname1 = new prov.QualifiedName("ex", "foo", "http://www.example.com/");
@@ -31,10 +30,9 @@ describe("Basic QualifiedName", function() {
 		var qname2 = new prov.QualifiedName("fu", "foo", "http://www.anotherexample.com/");
 		expect(qname1.equals(qname2)).toBeFalsy();
 	});
-	it("QualifiedName equals ", function() {
+	it("QualifiedName not equals same concat path", function() {
 		var qname1 = new prov.QualifiedName("ex", "bah/foo", "http://www.example.com/");
 		var qname2 = new prov.QualifiedName("fu", "foo", "http://www.example.com/bah/");
 		expect(qname1.equals(qname2)).toBeFalsy();
-		// TODO: Not sure if this should be true or false (diff prefix, namespace but same url?)
 	});
 });
