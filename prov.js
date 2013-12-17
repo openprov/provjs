@@ -229,7 +229,28 @@ Derivation.prototype.to = 'usedEntity';
 
 // TODO: decide on whether to support special cases for Revision, Quotation, PrimarySource
 
-// TODO: Attribution
+function make_relation_prototype()
+{
+	var c = arguments[0];
+	var i;
+	c.prototype = Object.create(Relation.prototype);
+	c.prototype.constructor = c;
+	c.prototype.relation_name = arguments[1];
+	c.prototype.from = arguments[2];
+	c.prototype.to = arguments[3];
+	c.prototype.relations = new Array();
+	for(i=4; i<arguments.length; i++) {
+		c.prototype.relations[i-4] = arguments[i];
+	}
+}
+
+function Attribution(anEntity, anAgent) {
+	Relation.call(this);
+	this.entity = anEntity;
+	this.agent = anAgent;
+}
+make_relation_prototype(Attribution, 'wasAttributedTo', 'entity', 'agent');
+
 // TODO: Association
 // TODO: Delegation
 // TODO: Influence
@@ -261,6 +282,7 @@ ProvJS.prototype = {
 	Entity: Entity,
 	Relation: Relation,
 	Derivation: Derivation,
+	Attribution: Attribution,
 
 	// All registered namespaces
 	namespaces: {
