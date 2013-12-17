@@ -35,7 +35,10 @@ QualifiedName.prototype.toString = function() {
 	return ret;
 };
 QualifiedName.prototype.equals = function(other) {
-	return ((other instanceof QualifiedName) && (this.uri===other.uri));
+	return ((other instanceof QualifiedName)
+	        && (this.namespaceURI===other.namespaceURI)
+	        && (this.localPart===other.localPart)
+	       );
 };
 
 
