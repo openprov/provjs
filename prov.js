@@ -215,14 +215,9 @@ function defineProp(obj, propName, validator) {
     })
 }
 
-function makePROVRelation(provn_name, from, to, extras) {
-    var constructorCode =
-        "prov.Relation.call(this); " +
-        "this." + from + " = " + from + "; " +
-        "this." + to + " = " + to + ";";
-    var ret = new Function([from, to], constructorCode);
+function decoratePROVRelation(cls, provn_name, from, to, extras) {
     var proto = Object.create(Relation.prototype);
-    proto.constructor = ret;
+    proto.constructor = cls;
     proto.provn_name = provn_name;
     proto.relations = [];
     var provTerms = [from, to];
@@ -240,8 +235,8 @@ function makePROVRelation(provn_name, from, to, extras) {
     proto.getPROVTerms = function () {
         return provTerms; // returning the array above to avoid the same array being duplicated in every relation of the same type
     }
-    ret.prototype = proto;
-    return ret;
+    cls.prototype = proto;
+    return cls;
 }
 
 // TODO: Generation
@@ -252,14 +247,25 @@ function makePROVRelation(provn_name, from, to, extras) {
 // TODO: Invalidation
 // TODO: decide on whether to support special cases for Revision, Quotation, PrimarySource
 
-var Derivation = makePROVRelation(
-    "wasDerivation", "generatedEntity", "usedEntity", [
+function Derivation(generatedEntity, usedEntity) {
+    Relation.call(this)
+    this.generatedEntity = generatedEntity;
+    this.usedEntity = usedEntity;
+}
+
+decoratePROVRelation(Derivation,
+    "wasDerivedFrom", "generatedEntity", "usedEntity", [
         ["activity", requireQualifiedName],
         ["generation", requireQualifiedName],
         ["usage", requireQualifiedName]
     ]
 );
-var Attribution = makePROVRelation(
+function Attribution(entity, agent) {
+    Relation.call(this);
+    this.entity = entity;
+    this.agent = agent;
+}
+decoratePROVRelation(Attribution,
     "wasAttributedTo", "entity", "agent"
 );
 
