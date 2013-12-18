@@ -88,7 +88,7 @@ Record.prototype = {
 	getId: function() {
 		return this.id;
 	},
-	set_attr: function(k, v){
+	setAttr: function(k, v){
 		var i;
 		var existing = false;
 		var values = this.getAttr(k);
@@ -102,12 +102,7 @@ Record.prototype = {
 			this.attributes.push([k,v]);
 		}
 	},
-	// TODO prov:label
-	// TODO prov:type
-	// TODO prov:value
-	// TODO prov:location
-	// TODO prov:role
-	
+
 	// Arbitrary attributes
 	getAttr: function(attr_name) {
 		var results = [];
@@ -117,7 +112,7 @@ Record.prototype = {
 			}
 		}
 		return results;
-	},
+	}
 };
  
 
@@ -171,26 +166,83 @@ Relation.prototype.constructor = Relation;
 Relation.prototype.toString = function() {
 	var that = this;
 	var output = [];
+    var provTerms = this.getPROVTerms();
+    var term0 = this[provTerms[0]]; // The first term should always available
 	if (this.identifier) {
-		output.push(String(this.identifier) + "; " + this[this.from]);
+		output.push(String(this.identifier) + "; " + term0);
 	} else {
-		output.push(this[this.from]);
+		output.push(term0);
 	}
-	output.push(this[this.to]);
-	var rel = this.relations.map(function(x) {
-		return (that[x]) ? that[x] : "";
+	var rel = provTerms.slice(1).map(function(x) {
+		return (that[x]) ? that[x] : "-";
 	}).join(", ");
-	if (rel.split(", ").join("") !== "") {
-		output.push(rel);
-	}
+    output.push(rel);
+
 	var attr = this.attributes.map(function(x) {
 		return x.join("=");
 	}).join(", ");
 	if (attr !== "") {
 		output.push("["+attr+"]");
 	}
-	return this.relation_name + "(" + output.join(", ") + ")";
+	return this.provn_name + "(" + output.join(", ") + ")";
 };
+
+// Validation functions
+function requireQualifiedName(value) {
+    if (!(value instanceof QualifiedName)) {
+        throw new Error("Expected a prov.QualifiedName value");
+    }
+}
+function requireDate(value) {
+    if (!(value instanceof Date)) {
+        throw new Error("Expected a Date value");
+    }
+}
+
+function defineProp(obj, propName, validator) {
+    if (obj.properties === undefined) {
+        obj.properties = {};
+    }
+    obj.properties[propName] = undefined;
+    Object.defineProperty(obj, propName, {
+        get: function () {
+            return this.properties[propName];
+        },
+        set: function (newValue) {
+            validator(newValue);
+            this.properties[propName] = newValue;
+        }
+    })
+}
+
+function makePROVRelation(provn_name, from, to, extras) {
+    var constructorCode =
+        "prov.Relation.call(this); " +
+        "this." + from + " = " + from + "; " +
+        "this." + to + " = " + to + ";";
+    var ret = new Function([from, to], constructorCode);
+    var proto = Object.create(Relation.prototype);
+    proto.constructor = ret;
+    proto.provn_name = provn_name;
+    proto.relations = [];
+    var provTerms = [from, to];
+    // The first two terms are always required to be QualifiedName
+    defineProp(proto, from, requireQualifiedName);
+    defineProp(proto, to, requireQualifiedName);
+    if (extras !== undefined) {
+        for (var i = 0; i < extras.length; i++) {
+            var term = extras[i];
+            provTerms.push(term[0]);
+            defineProp(proto, term[0], term[1]);
+        }
+    }
+    Object.freeze(provTerms); // Prevent this array from being modified
+    proto.getPROVTerms = function () {
+        return provTerms; // returning the array above to avoid the same array being duplicated in every relation of the same type
+    }
+    ret.prototype = proto;
+    return ret;
+}
 
 // TODO: Generation
 // TODO: Usage
@@ -198,43 +250,18 @@ Relation.prototype.toString = function() {
 // TODO: Start
 // TODO: End
 // TODO: Invalidation
-//
-// Derivation
-function Derivation(generatedEntity, usedEntity) {
-	Relation.call(this);
-	this.generatedEntity = generatedEntity;
-	this.usedEntity = usedEntity;
-}
-Derivation.prototype = Object.create(Relation.prototype);
-Derivation.prototype.constructor = Derivation;
-Derivation.prototype.relations = ['activity', 'generation', 'usage'];
-Derivation.prototype.relation_name = 'wasDerivedFrom';
-Derivation.prototype.from = 'generatedEntity';
-Derivation.prototype.to = 'usedEntity';
-
 // TODO: decide on whether to support special cases for Revision, Quotation, PrimarySource
 
-function make_relation_prototype()
-{
-	var c = arguments[0];
-	var i;
-	c.prototype = Object.create(Relation.prototype);
-	c.prototype.constructor = c;
-	c.prototype.relation_name = arguments[1];
-	c.prototype.from = arguments[2];
-	c.prototype.to = arguments[3];
-	c.prototype.relations = new Array();
-	for(i=4; i<arguments.length; i++) {
-		c.prototype.relations[i-4] = arguments[i];
-	}
-}
-
-function Attribution(anEntity, anAgent) {
-	Relation.call(this);
-	this.entity = anEntity;
-	this.agent = anAgent;
-}
-make_relation_prototype(Attribution, 'wasAttributedTo', 'entity', 'agent');
+var Derivation = makePROVRelation(
+    "wasDerivation", "generatedEntity", "usedEntity", [
+        ["activity", requireQualifiedName],
+        ["generation", requireQualifiedName],
+        ["usage", requireQualifiedName]
+    ]
+);
+var Attribution = makePROVRelation(
+    "wasAttributedTo", "entity", "agent"
+);
 
 // TODO: Association
 // TODO: Delegation
@@ -245,9 +272,19 @@ make_relation_prototype(Attribution, 'wasAttributedTo', 'entity', 'agent');
 
 // TODO: Bundles
 
-function Document() {
-	// This is a provanance document
+function Document(statements) {
+	this.statements = statements.slice(); // Cloning the list of statements
+    // TODO Collect all namespaces used in various QualifiedName to define in the prefix block
+    // This can also be done in when a document is exported to PROV-N or PROV-JSON
 }
+
+Document.prototype = {
+    constructor: Document,
+    toPROVJSON: function () {
+        // TODO implement following _encode_JSON_container()
+        // (See https://github.com/trungdong/prov/blob/master/prov/model/__init__.py#L1375)
+    }
+};
 
 var provNS = new Namespace("prov", "http://www.w3.org/ns/prov#");
 var xsdNS = new Namespace("xsd", "http://www.w3.org/2000/10/XMLSchema#");
@@ -260,6 +297,7 @@ function ProvJS() {
 }
 
 ProvJS.prototype = {
+    // Exposing classes via the ProvJS class
 	URI: URI,
 	QualifiedName: QualifiedName,
 	Literal: Literal,
@@ -367,32 +405,6 @@ ProvJS.prototype = {
 		this.pushContext(ret);
 		return this;
 	},
-	attr: function(attr_name, attr_value) {
-		// Overloading this with getter behaviour
-		var context = this.getContext();
-		if (context===undefined) {
-			return(undefined);
-		}
-		if (attr_value === undefined) {
-			return context.getAttr(this.getValidQualifiedName(attr_name));
-		}
-		var name = this.getValidQualifiedName(attr_name);
-		var value = this.getValidLiteral(attr_value);
-		context.set_attr(name, value);
-		return this;
-	},
-	id: function() {
-		var context = this.getContext();
-		if (context===undefined) {
-			return(undefined);
-		}
-		if (arguments.length==0) {
-			return context.id();
-		} else {
-			context.id(this.getValidQualifiedName(arguments[0]));
-			return(this);
-		}
-	},
 	wasDerivedFrom: function() {
 		var ret;
 		var l = arguments.length;
@@ -402,16 +414,58 @@ ProvJS.prototype = {
 		ret = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
 		if (l > 2) {
 			for (var pos = 3; pos < l; pos += 2) {
-				ret.set_attr(this.getValidQualifiedName(arguments[pos - 1]), this.getValidLiteral(arguments[pos]));
+				ret.setAttr(this.getValidQualifiedName(arguments[pos - 1]), this.getValidLiteral(arguments[pos]));
 			}
 		}
 		this.pushContext(ret);
 		return this;
 	},
+    wasAttributedTo: function(entity, agent) {
+        var statement = new Attribution(this.getValidQualifiedName(entity), this.getValidQualifiedName(agent));
+        // TODO Handle optional attribute-value pairs
+        this.pushContext(statement);
+        return this;
+    },
+    // Setting properties
+    attr: function(attr_name, attr_value) {
+		var context = this.getContext();
+		if (context===undefined) {
+			return(undefined);
+		}
+		if (attr_value === undefined) {
+    		// Overloading this with getter behaviour
+			return context.getAttr(this.getValidQualifiedName(attr_name));
+		}
+		var name = this.getValidQualifiedName(attr_name);
+		var value = this.getValidLiteral(attr_value);
+		context.setAttr(name, value);
+		return this;
+	},
+	id: function() {
+		var context = this.getContext();
+		if (context === undefined) {
+			return(undefined);
+		}
+		if (arguments.length == 0) {
+			return context.id();
+		} else {
+			context.id(this.getValidQualifiedName(arguments[0]));
+			return(this);
+		}
+	},
+	// TODO prov:label
+	// TODO prov:type
+	// TODO prov:value
+	// TODO prov:location
+	// TODO prov:role
+
+
 	// TODO Collect all created records
 	toString: function() {
 		return 'ProvJS('+this.wrap.join(", ")+')';
 	},
+
+    // Context management
 	pushContext: function(o) {
 		this.wrap.push(o);
 	},
@@ -424,6 +478,9 @@ ProvJS.prototype = {
 		}
 	},
 	// TODO Construct documents and bundles
+    buildDocument: function() {
+        return new Document(this.wrap);
+    }
 };
 
 // This is the default ProvJS object
