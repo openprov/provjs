@@ -96,7 +96,7 @@ Record.prototype = {
 		return this;
 	},
 	getId: function() {
-		return this.id;
+		return this.identifier;
 	},
 	setAttr: function(k, v){
 		var i;
@@ -141,6 +141,7 @@ function Entity(identifier) {
 }
 Entity.prototype = Object.create(Element.prototype);
 Entity.prototype.constructor = Entity;
+Entity.prototype.provn_name = "entity";
 Entity.prototype.toString = function() {
 	var output = [];
 	output.push(String(this.identifier));
@@ -290,18 +291,52 @@ definePROVRelation(Attribution,
 // TODO: Membership
 
 // TODO: Bundles
+var uniqueIDCount = 0;
+function getUniqueID(obj) {
+    // Generating unique identifiers for PROV-JSON export
+    var ret;
+    if (obj.getId !== undefined && (ret = obj.getId()) !== undefined) {
+        // Return the existing identifier
+        return ret.toString();
+    }
+    if (obj.__provjson_id === undefined) {
+        obj.__provjson_id = "_:id" + (++uniqueIDCount);
+
+    }
+    return obj.__provjson_id;
+}
 
 function Document(statements) {
-	this.statements = statements.slice(); // Cloning the list of statements
+    this.statements = statements.slice(); // Cloning the list of statements
     // TODO Collect all namespaces used in various QualifiedName to define in the prefix block
     // This can also be done in when a document is exported to PROV-N or PROV-JSON
 }
 
 Document.prototype = {
     constructor: Document,
-    toPROVJSON: function () {
+    buildPROVJSON: function () {
         // TODO implement following _encode_JSON_container()
         // (See https://github.com/trungdong/prov/blob/master/prov/model/__init__.py#L1375)
+        var container = {};
+        for (var i = 0, l = this.statements.length; i < l; i++) {
+            var statement = this.statements[i];
+            var id = getUniqueID(statement);
+            var stJSON = {};
+            if (statement instanceof Relation) {
+                var terms = statement.getPROVTerms();
+                for (var j = 0; j < terms.length; j++) {
+                    if (statement[terms[j]] !== undefined) {
+                        stJSON["prov:" + terms[j]] = statement[terms[j]].toString();
+                    }
+                }
+            }
+            // TODO Export attribute-value pairs (and startTime, endTime for activities)
+            if (container[statement.provn_name] === undefined) {
+                container[statement.provn_name] = {};
+            }
+            container[statement.provn_name][id] = stJSON;
+        }
+        return container;
     }
 };
 
@@ -362,7 +397,7 @@ ProvJS.prototype = {
 			
 		// TODO If a default namespace is registered, use it
 
-		console.error("Cannot validate identifier:", identifier);
+		throw new Error("Cannot validate identifier:", identifier);
 		return identifier;
 	},
 	literal: function(value, datatype, langtag) {

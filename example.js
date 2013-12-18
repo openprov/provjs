@@ -42,3 +42,7 @@ console.log("" + der2);
 
 var attr1 = prov.wasAttributedTo("ex:e1", "ex:ag");
 console.log(attr1.getContext());
+
+var doc = prov.buildDocument();
+var provjson = doc.buildPROVJSON();
+console.log(JSON.stringify(provjson, null, "  "));
