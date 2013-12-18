@@ -68,7 +68,7 @@ Literal.prototype.toString = function() {
 };
 Literal.prototype.equals = function(other) {
 	// TODO check whether this is correct or is too strict
-	return (   (other instanceof Literal)
+	return ((other instanceof Literal)
 	        && (this.value===other.value)
 	        && (this.datatype===other.datatype)
 	        && (this.langtag===other.langtag) );
@@ -76,7 +76,17 @@ Literal.prototype.equals = function(other) {
 
 // Record
 function Record() {
+    // Parsing the optional attribute-value pairs if the last argument is a list
 	this.attributes = [];
+    var len = arguments.length;
+    if (len > 1 && arguments[len - 1] instanceof Array) {
+        // Requiring at least 3 arguments (record-specific first term, an array)
+        var attrPairs = arguments[len - 1];
+        for (var i = 0, l = attrPairs.length; i < l; i += 2) {
+            requireQualifiedName(attrPairs[i]);
+            this.setAttr(attrPairs[i], attrPairs[i + 1]);
+        }
+    }
 }
 Record.prototype = {
 	/* GETTERS & SETTERS */
@@ -119,7 +129,7 @@ Record.prototype = {
 
 // Element
 function Element(identifier) {
-	Record.call(this);
+	Record.apply(this, arguments);
 	this.identifier = identifier;
 }
 Element.prototype = Object.create(Record.prototype);
@@ -127,7 +137,7 @@ Element.prototype.constructor = Element;
 
 // Entity
 function Entity(identifier) {
-	Element.call(this, identifier);
+	Element.apply(this, arguments);
 }
 Entity.prototype = Object.create(Element.prototype);
 Entity.prototype.constructor = Entity;
@@ -153,13 +163,20 @@ Entity.prototype.toString = function() {
 // TODO: decide on whether to support Person, Organization, SoftwareAgent
 
 // Relation
-function Relation()
-{
-	var i;
-	Record.call(this);
-	for(i=0; i<this.relations.length; i++) {
-		this[this.relations[i]] = undefined;
-	}
+function Relation() {
+    var len = arguments.length;
+    if (len > 0) {
+        // Processing relation terms
+        if (arguments[len - 1] instanceof Array) {
+            // Assuming this is the array of attribute-value pairs, ignore it
+            len--;
+        }
+        var terms = this.getPROVTerms();
+        for (var i = 0; i < len; i++) {
+            this[terms[i]] = arguments[i];
+        }
+    }
+	Record.apply(this, arguments);
 }
 Relation.prototype = Object.create(Record.prototype);
 Relation.prototype.constructor = Relation;
@@ -188,6 +205,7 @@ Relation.prototype.toString = function() {
 };
 
 // Validation functions
+// TODO These validation function currently does not allow for reporting which value is offending the rules
 function requireQualifiedName(value) {
     if (!(value instanceof QualifiedName)) {
         throw new Error("Expected a prov.QualifiedName value");
@@ -215,11 +233,10 @@ function defineProp(obj, propName, validator) {
     })
 }
 
-function decoratePROVRelation(cls, provn_name, from, to, extras) {
+function definePROVRelation(cls, provn_name, from, to, extras) {
     var proto = Object.create(Relation.prototype);
     proto.constructor = cls;
     proto.provn_name = provn_name;
-    proto.relations = [];
     var provTerms = [from, to];
     // The first two terms are always required to be QualifiedName
     defineProp(proto, from, requireQualifiedName);
@@ -248,12 +265,10 @@ function decoratePROVRelation(cls, provn_name, from, to, extras) {
 // TODO: decide on whether to support special cases for Revision, Quotation, PrimarySource
 
 function Derivation(generatedEntity, usedEntity) {
-    Relation.call(this)
-    this.generatedEntity = generatedEntity;
-    this.usedEntity = usedEntity;
+    Relation.apply(this, arguments);
 }
 
-decoratePROVRelation(Derivation,
+definePROVRelation(Derivation,
     "wasDerivedFrom", "generatedEntity", "usedEntity", [
         ["activity", requireQualifiedName],
         ["generation", requireQualifiedName],
@@ -261,11 +276,9 @@ decoratePROVRelation(Derivation,
     ]
 );
 function Attribution(entity, agent) {
-    Relation.call(this);
-    this.entity = entity;
-    this.agent = agent;
+    Relation.apply(this, arguments);
 }
-decoratePROVRelation(Attribution,
+definePROVRelation(Attribution,
     "wasAttributedTo", "entity", "agent"
 );
 
@@ -412,18 +425,18 @@ ProvJS.prototype = {
 		return this;
 	},
 	wasDerivedFrom: function() {
-		var ret;
+		var statement;
 		var l = arguments.length;
 		if (l < 2) {
 			return undefined;
 		}
-		ret = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
+		statement = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
 		if (l > 2) {
 			for (var pos = 3; pos < l; pos += 2) {
-				ret.setAttr(this.getValidQualifiedName(arguments[pos - 1]), this.getValidLiteral(arguments[pos]));
+				statement.setAttr(this.getValidQualifiedName(arguments[pos - 1]), this.getValidLiteral(arguments[pos]));
 			}
 		}
-		this.pushContext(ret);
+		this.pushContext(statement);
 		return this;
 	},
     wasAttributedTo: function(entity, agent) {
