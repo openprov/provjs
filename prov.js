@@ -240,6 +240,7 @@ Agent.prototype.toString = function() {
 
 // Relation
 function Relation() {
+    this.properties = {};
     var len = arguments.length;
     if (len > 0) {
         // Processing relation terms
@@ -252,7 +253,7 @@ function Relation() {
             this[terms[i]] = arguments[i];
         }
     }
-	Record.apply(this, arguments);
+    Record.apply(this, arguments);
 }
 Relation.prototype = Object.create(Record.prototype);
 Relation.prototype.constructor = Relation;
@@ -294,13 +295,12 @@ function requireDate(value) {
 }
 
 function defineProp(obj, propName, validator) {
-    if (obj.properties === undefined) {
-        obj.properties = {};
-    }
-    obj.properties[propName] = undefined;
     Object.defineProperty(obj, propName, {
         get: function () {
-            return this.properties[propName];
+          if (propName in this.properties)
+              return this.properties[propName];
+          else
+              return undefined;
         },
         set: function (newValue) {
             validator(newValue);
