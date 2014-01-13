@@ -23,6 +23,9 @@
         }
      
         Date.prototype.toISOString = function() {
+        	if (this === undefined) {
+        		return "";
+        	}
             return this.getUTCFullYear()
                 + '-' + pad( this.getUTCMonth() + 1 )
                 + '-' + pad( this.getUTCDate() )
@@ -188,8 +191,10 @@ Entity.prototype.toString = function() {
 function Activity(identifier, st, et) {
 	len = arguments.length;
 	// TODO: how do we validate dates / times in js? 
-	this.startTime = new Date(Date.parse(st));
-	this.endTime = new Date(Date.parse(et));
+	// this.startTime = new Date(Date.parse(st));
+	// this.endTime = new Date(Date.parse(et));
+	this.startTime = st;
+	this.endTime = et;
 	Element.apply(this, arguments);
 }
 Activity.prototype = Object.create(Element.prototype);
@@ -198,8 +203,8 @@ Activity.prototype.provn_name = "activity";
 Activity.prototype.toString = function() {
 	var output = [];
 	output.push(String(this.identifier));
-	output.push(this.startTime!=null?Date.toISOString(this.startTime):"");
-	output.push(this.endTime!=null?Date.toISOString(this.endTime):"");
+	output.push(this.startTime.toISOString());
+	output.push(this.endTime.toISOString());
 	var attr = this.attributes.map(function(x) {
 		return x.join("=");
 		}).join(", ");
@@ -337,12 +342,12 @@ function definePROVRelation(cls, provn_name, from, to, extras) {
 //     time: an optional "generation time" (t), the time at which the entity was completely created;
 //     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this generation.
 // While each of id, activity, time, and attributes is optional, at least one of them must be present.
-function Generation(generatedEntity, generatingActivity) {
+function Generation(entity, activity) {
     Relation.apply(this, arguments);
 }
 // TODO: activity is optional in the standard but mandatory here
 definePROVRelation(Generation,
-    "wasGeneratedBy", "generatedEntity", "generatingActivity", [
+    "wasGeneratedBy", "entity", "activity", [
         ["time", requireDate]    ]
 );
 
@@ -361,7 +366,7 @@ function Usage(userActivity, usedEntity) {
 }
 // TODO: entity is optional in the standard but mandatory here
 definePROVRelation(Usage,
-    "used", "userActivity", "usedEntity", [
+    "used", "activity", "entity", [
         ["time", requireDate]
     ]
 );
@@ -542,6 +547,7 @@ definePROVRelation(Influence,
 function Specialization(specificEntity, generalEntity) {
     Relation.apply(this, arguments);
 }
+// TODO: delete the identifier and the attributes 
 definePROVRelation(Specialization,
     "specializationOf", "specificEntity", "generalEntity"
 );
@@ -554,6 +560,7 @@ definePROVRelation(Specialization,
 function Alternate(alternate1, alternate2) {
     Relation.apply(this, arguments);
 }
+// TODO: delete the identifier and the attributes 
 definePROVRelation(Alternate,
     "alternateOf", "alternate1", "alternate2"
 );
@@ -569,6 +576,7 @@ definePROVRelation(Alternate,
 function Membership(collection, member) {
     Relation.apply(this, arguments);
 }
+// TODO: delete the identifier and the attributes 
 definePROVRelation(Membership,
     "hadMember", "collection", "member"
 );
@@ -754,6 +762,17 @@ ProvJS.prototype = {
 			ret = this.literal(literal);
 		return ret;
 	},
+	getValidDate: function(dt) {
+		var ret;
+		if (dt instanceof Date) {
+			ret = new Date(dt);
+		} else if (typeof dt === "string" ) {
+			ret = new Date(Date.parse(dt));			
+		} else if (typeof dt === "number" ) {
+			ret = new Date(dt);
+		}
+		return ret;
+	},
 
 	// PROV statements
     addStatement: function(statement) {
@@ -789,8 +808,39 @@ ProvJS.prototype = {
         }
 
 	},
-    // TODO: similar to the above for agent
-    // TODO: similar to the above for activity
+	agent: function(identifier) {
+        var agID = this.getValidQualifiedName(identifier);
+        if (this.scope instanceof Record) {
+            // Setting the agent identifier
+            this.scope.agent = agID;
+            return this;
+        }
+        else {
+            var newAgent = new Agent(agID);
+            this.addStatement(newAgent);
+            var newProvJS = new ProvJS(newAgent, this);
+            return newProvJS;
+        }
+	},
+	activity: function(identifier) {
+        var aID = this.getValidQualifiedName(identifier);
+        if (this.scope instanceof Record) {
+            // Setting the activity identifier
+            this.scope.activity = aID;
+            return this;
+        }
+        else {
+        	// TODO: get the start time and end time from the list of arguments
+        	if (arguments.length >= 2) {
+	        	var st = this.getValidDate(arguments[1]); 
+	        	var et = this.getValidDate(arguments[2]);
+        	}
+            var newActivity = new Activity(aID, st, et);
+            this.addStatement(newActivity);
+            var newProvJS = new ProvJS(newActivity, this);
+            return newProvJS;
+        }
+	},
 
 	wasDerivedFrom: function() {
 		var statement;
