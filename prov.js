@@ -315,6 +315,9 @@ function definePROVRelation(cls, provn_name, from, to, extras) {
     proto.provn_name = provn_name;
     var provTerms = [from, to];
     // The first two terms are always required to be QualifiedName
+    cls.from = from;
+    cls.to = to;
+    cls.extras = extras;
     defineProp(proto, from, requireQualifiedName);
     defineProp(proto, to, requireQualifiedName);
     if (extras !== undefined) {
@@ -647,6 +650,41 @@ function ProvJS(scope, parent) {
     this.parent = parent;
 }
 
+function rel_maker(cls) {
+	var fn = function() {
+		var statement, parameters;
+		var usable_args = arguments.length;
+		var pos, attributes;
+		if (usable_args < 2) {
+			return undefined;
+		}
+		if (Array.isArray(arguments[usable_args-1])) {
+			usable_args = usable_args-1;
+		}
+		parameters = [this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1])];
+		for(pos = 0; (pos < cls.extras.length) && ((pos+2) < usable_args); pos++) {
+			if (cls.extras[pos][1] === requireQualifiedName) {
+				parameters.push(this.getValidQualifiedName(arguments[pos+2]));
+			} else
+			if (cls.extras[pos][1] === requireDate) {
+				parameters.push(this.getValidDate(arguments[pos+2]));
+			}
+		}
+		statement = Object.create(cls.prototype);
+		statement = (cls.apply(statement, parameters) || statement);
+		if (Array.isArray(arguments[arguments.length-1])) {
+			attributes = arguments[arguments.length-1];
+			for (pos = 1; pos < arguments.length; pos += 2) {
+				statement.setAttr(this.getValidQualifiedName(attributes[pos - 1]), this.getValidLiteral(attributes[pos]));
+			}
+		}
+		this.addStatement(statement);
+		var newProvJS = new ProvJS(statement, this);
+		return newProvJS;
+	};
+	return fn;
+}
+
 function Bundle(identifier) {
 	Document.apply(this, arguments);
 	this.identifier = identifier;
@@ -873,23 +911,7 @@ ProvJS.prototype = {
 		}
 	},
 
-	wasDerivedFrom: function() {
-		this._documentOnly();
-		var statement;
-		var l = arguments.length;
-		if (l < 2) {
-			return undefined;
-		}
-		statement = new Derivation(this.getValidQualifiedName(arguments[0]), this.getValidQualifiedName(arguments[1]));
-		if (l > 2) {
-			for (var pos = 3; pos < l; pos += 2) {
-				statement.setAttr(this.getValidQualifiedName(arguments[pos - 1]), this.getValidLiteral(arguments[pos]));
-			}
-		}
-		this.addStatement(statement);
-		var newProvJS = new ProvJS(statement, this);
-        return newProvJS;
-	},
+	wasDerivedFrom: rel_maker(Derivation),
     wasAttributedTo: function(entity, agent) {
 		this._documentOnly();
         var statement = new Attribution(this.getValidQualifiedName(entity), this.getValidQualifiedName(agent));

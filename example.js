@@ -36,7 +36,7 @@ console.log("" + der1);
 
 console.log(der1.attr("prov:type"));
 
-var der2 = prov.wasDerivedFrom("ex:e2", "ex:e1", "prov:type", prov.ns.qname("Revision"));
+var der2 = prov.wasDerivedFrom("ex:e2", "ex:e1", ["prov:type", prov.ns.qname("Revision")]);
 console.log(der2);
 console.log("" + der2);
 
