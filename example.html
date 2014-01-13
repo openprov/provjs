@@ -45,7 +45,7 @@
 			var der2 = prov.wasDerivedFrom("ex:e2", "ex:e1", "prov:type", prov.ns.qname("Revision"));
 			console.log(der2);
 
-			var bundle = prov.newBundle();
+			var bundle = prov.bundle();
 			bundle.entity("ex:e2").attr("prov:type", ["prov:Revision", "xsd:QName"]);
 			console.log(bundle);
 		}
