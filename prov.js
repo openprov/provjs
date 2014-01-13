@@ -911,15 +911,20 @@ ProvJS.prototype = {
 		}
 	},
 
+	wasGeneratedBy: rel_maker(Generation),
+	used: rel_maker(Usage),
+	wasInformedBy: rel_maker(Communication),
+	wasStartedBy: rel_maker(Start),
+	wasEndedBy: rel_maker(End),
+	wasInvalidatedBy: rel_maker(Invalidation),
 	wasDerivedFrom: rel_maker(Derivation),
-    wasAttributedTo: function(entity, agent) {
-		this._documentOnly();
-        var statement = new Attribution(this.getValidQualifiedName(entity), this.getValidQualifiedName(agent));
-        // TODO Handle optional attribute-value pairs
-        this.addStatement(statement);
-        var newProvJS = new ProvJS(statement, this);
-        return newProvJS;
-    },
+	wasAttributedTo: rel_maker(Attribution),
+	wasAssociatedWith: rel_maker(Association),
+	actedOnBehalfOf: rel_maker(Delegation),
+	wasInfluencedBy: rel_maker(Influence),
+	specializationOf: rel_maker(Specialization),
+	alternateOf: rel_maker(Alternate),
+	hadMember: rel_maker(Membership),
     // Setting properties
     attr: function(attr_name, attr_value) {
 		var context = this.scope;
