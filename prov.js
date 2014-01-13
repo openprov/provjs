@@ -10,6 +10,31 @@
 (function(window, undefined) {
 	"use strict";
 
+// Date ISO format
+    if ( !Date.prototype.toISOString ) {
+        ( function() {
+
+        function pad(number) {
+            var r = String(number);
+            if ( r.length === 1 ) {
+                r = '0' + r;
+            }
+            return r;
+        }
+     
+        Date.prototype.toISOString = function() {
+            return this.getUTCFullYear()
+                + '-' + pad( this.getUTCMonth() + 1 )
+                + '-' + pad( this.getUTCDate() )
+                + 'T' + pad( this.getUTCHours() )
+                + ':' + pad( this.getUTCMinutes() )
+                + ':' + pad( this.getUTCSeconds() )
+                + '.' + String( (this.getUTCMilliseconds()/1000).toFixed(3) ).slice( 2, 5 )
+                + 'Z';
+        };
+        }() );
+    }
+
 // URI
 function URI(uri) {
 	this.uri = uri;
@@ -125,8 +150,6 @@ Record.prototype = {
 	}
 };
  
-
-
 // Element
 function Element(identifier) {
 	Record.apply(this, arguments);
@@ -151,16 +174,63 @@ Entity.prototype.toString = function() {
 	if (attr !== "") {
 		output.push("["+attr+"]");
 	}
-	return "entity(" + output.join(", ") + ")";
+	return Entity.prototype.provn_name+"(" + output.join(", ") + ")";
 };
 // TODO: decide on whether to support Plan
 
-// TODO: Agent
-// Subclass Element
+// An activity is something that occurs over a period of time and acts upon or with entities; 
+// it may include consuming, processing, transforming, modifying, relocating, using, or generating entities.
+// activity(id, st, et, [attr1=val1, ...]) , has:
+//     id: an identifier for an activity;
+//     startTime: an optional time (st) for the start of the activity;
+//     endTime: an optional time (et) for the end of the activity;
+//     attributes: an optional set of attribute-value pairs ((attr1, val1), ...) representing additional information about this activity.
+function Activity(identifier, st, et) {
+	len = arguments.length;
+	// TODO: how do we validate dates / times in js? 
+	this.startTime = new Date(Date.parse(st));
+	this.endTime = new Date(Date.parse(et));
+	Element.apply(this, arguments);
+}
+Activity.prototype = Object.create(Element.prototype);
+Activity.prototype.constructor = Activity;
+Activity.prototype.provn_name = "activity";
+Activity.prototype.toString = function() {
+	var output = [];
+	output.push(String(this.identifier));
+	output.push(this.startTime!=null?Date.toISOString(this.startTime):"");
+	output.push(this.endTime!=null?Date.toISOString(this.endTime):"");
+	var attr = this.attributes.map(function(x) {
+		return x.join("=");
+		}).join(", ");
+	if (attr !== "") {
+		output.push("["+attr+"]");
+	}
+	return Activity.prototype.provn_name+"(" + output.join(", ") + ")";
+};
 
-// TODO: Activity
-// Subclass Element
-// startTime, endTime
+// An agent is something that bears some form of responsibility for an activity taking place, for the existence of an entity, or for another agent's activity.
+// An agent may be a particular type of entity or activity. 
+// agent(id, [attr1=val1, ...]), has:
+//     id: an identifier for an agent;
+//     attributes: a set of attribute-value pairs ((attr1, val1), ...) representing additional information about this agent.
+function Agent(identifier) {
+	Element.apply(this, arguments);
+}
+Agent.prototype = Object.create(Element.prototype);
+Agent.prototype.constructor = Agent;
+Agent.prototype.provn_name = "agent";
+Agent.prototype.toString = function() {
+	var output = [];
+	output.push(String(this.identifier));
+	var attr = this.attributes.map(function(x) {
+		return x.join("=");
+		}).join(", ");
+	if (attr !== "") {
+		output.push("["+attr+"]");
+	}
+	return Agent.prototype.provn_name+"(" + output.join(", ") + ")";
+};
 // TODO: decide on whether to support Person, Organization, SoftwareAgent
 
 // Relation
@@ -257,8 +327,36 @@ function definePROVRelation(cls, provn_name, from, to, extras) {
     return cls;
 }
 
-// TODO: Generation
-// TODO: Usage
+// Generation is the completion of production of a new entity by an activity. 
+// This entity did not exist before generation and becomes available for usage after this generation.
+// Given that a generation is the completion of production of an entity, it is instantaneous.
+// wasGeneratedBy(id; e, a, t, attrs) , has:
+//     id: an optional identifier for a generation;
+//     entity: an identifier (e) for a created entity;
+//     activity: an optional identifier (a) for the activity that creates the entity;
+//     time: an optional "generation time" (t), the time at which the entity was completely created;
+//     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this generation.
+// While each of id, activity, time, and attributes is optional, at least one of them must be present.
+function Generation(generatedEntity) {
+    Relation.apply(this, arguments);
+}
+definePROVRelation(Generation,
+    "wasGeneratedBy", "generatedEntity", [
+        ["activity", requireQualifiedName],
+        ["time", requireDate]    ]
+);
+
+// Usage is the beginning of utilizing an entity by an activity. 
+// Before usage, the activity had not begun to utilize this entity and could not have been affected by the entity. 
+// Given that a usage is the beginning of utilizing an entity, it is instantaneous.
+// used(id; a, e, t, attrs), has:
+	// id: an optional identifier for a usage;
+	// activity: an identifier (a) for the activity that used an entity;
+	// entity: an optional identifier (e) for the entity being used;
+	// time: an optional "usage time" (t), the time at which the entity started to be used;
+	// attributes: an optional set (attrs) of attribute-value pairs representing additional information about this usage.
+	// While each of id, entity, time, and attributes is optional, at least one of them must be present.
+
 // TODO: Communication
 // TODO: Start
 // TODO: End
@@ -268,7 +366,6 @@ function definePROVRelation(cls, provn_name, from, to, extras) {
 function Derivation(generatedEntity, usedEntity) {
     Relation.apply(this, arguments);
 }
-
 definePROVRelation(Derivation,
     "wasDerivedFrom", "generatedEntity", "usedEntity", [
         ["activity", requireQualifiedName],
@@ -276,6 +373,7 @@ definePROVRelation(Derivation,
         ["usage", requireQualifiedName]
     ]
 );
+
 function Attribution(entity, agent) {
     Relation.apply(this, arguments);
 }
