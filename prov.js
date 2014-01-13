@@ -479,10 +479,19 @@ ProvJS.prototype = {
     },
 
     document: function() {
+    	// Allow prov.document()
+    	if(this.scope !== undefined) {
+			throw new Error("Unable to call this method here.");
+    	}
     	return new ProvJS();
     },
 
     bundle: function(identifier) {
+		// Allow prov.bundle() or prov.document().bundle()
+		this._documentOnly();
+		if(this.scope instanceof Bundle) {
+			throw new Error("Unable to call this method on a bundle.");
+		}
     	var eID = this.getValidQualifiedName(identifier);
     	var newBundle = new Bundle(eID);
     	var newProvJS = new ProvJS(newBundle, this);
@@ -505,10 +514,17 @@ ProvJS.prototype = {
         }
 
 	},
+
+	_documentOnly: function() {
+		if(!(this.scope instanceof Document)) {
+			throw new Error("Unable to call this method here.");
+		}
+	},
     // TODO: similar to the above for agent
     // TODO: similar to the above for activity
 
 	wasDerivedFrom: function() {
+		this._documentOnly();
 		var statement;
 		var l = arguments.length;
 		if (l < 2) {
@@ -525,6 +541,7 @@ ProvJS.prototype = {
         return newProvJS;
 	},
     wasAttributedTo: function(entity, agent) {
+		this._documentOnly();
         var statement = new Attribution(this.getValidQualifiedName(entity), this.getValidQualifiedName(agent));
         // TODO Handle optional attribute-value pairs
         this.addStatement(statement);
