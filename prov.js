@@ -23,6 +23,9 @@
         }
      
         Date.prototype.toISOString = function() {
+        	if (this === undefined) {
+        		return "";
+        	}
             return this.getUTCFullYear()
                 + '-' + pad( this.getUTCMonth() + 1 )
                 + '-' + pad( this.getUTCDate() )
@@ -188,8 +191,10 @@ Entity.prototype.toString = function() {
 function Activity(identifier, st, et) {
 	len = arguments.length;
 	// TODO: how do we validate dates / times in js? 
-	this.startTime = new Date(Date.parse(st));
-	this.endTime = new Date(Date.parse(et));
+	// this.startTime = new Date(Date.parse(st));
+	// this.endTime = new Date(Date.parse(et));
+	this.startTime = st;
+	this.endTime = et;
 	Element.apply(this, arguments);
 }
 Activity.prototype = Object.create(Element.prototype);
@@ -198,8 +203,8 @@ Activity.prototype.provn_name = "activity";
 Activity.prototype.toString = function() {
 	var output = [];
 	output.push(String(this.identifier));
-	output.push(this.startTime!=null?Date.toISOString(this.startTime):"");
-	output.push(this.endTime!=null?Date.toISOString(this.endTime):"");
+	output.push(this.startTime.toISOString());
+	output.push(this.endTime.toISOString());
 	var attr = this.attributes.map(function(x) {
 		return x.join("=");
 		}).join(", ");
@@ -789,8 +794,38 @@ ProvJS.prototype = {
         }
 
 	},
-    // TODO: similar to the above for agent
-    // TODO: similar to the above for activity
+	agent: function(identifier) {
+        var agID = this.getValidQualifiedName(identifier);
+        if (this.scope instanceof Record) {
+            // Setting the agent identifier
+            this.scope.agent = agID;
+            return this;
+        }
+        else {
+            var newAgent = new Agent(agID);
+            this.addStatement(newAgent);
+            var newProvJS = new ProvJS(newAgent, this);
+            return newProvJS;
+        }
+	},
+	activity: function(identifier) {
+        var aID = this.getValidQualifiedName(identifier);
+        if (this.scope instanceof Record) {
+            // Setting the activity identifier
+            this.scope.activity = aID;
+            return this;
+        }
+        else {
+        	// TODO: get the start time and end time from the list of arguments
+        	var st = this.getValidDate();
+        	var et = this.getValidDate();
+            var newActivity = new Activity(aID, st, et);
+            this.addStatement(newActivity);
+            var newProvJS = new ProvJS(newActivity, this);
+            return newProvJS;
+        }
+	},
+
 
 	wasDerivedFrom: function() {
 		var statement;
