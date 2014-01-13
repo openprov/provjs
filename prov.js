@@ -306,8 +306,9 @@ function getUniqueID(obj) {
     return obj.__provjson_id;
 }
 
-function Document(statements) {
-    this.statements = statements.slice(); // Cloning the list of statements
+function Document() {
+	this.statements = new Array();
+    // this.statements = statements.slice(); // Cloning the list of statements
     // TODO Collect all namespaces used in various QualifiedName to define in the prefix block
     // This can also be done in when a document is exported to PROV-N or PROV-JSON
 }
@@ -337,7 +338,10 @@ Document.prototype = {
             container[statement.provn_name][id] = stJSON;
         }
         return container;
-    }
+    },
+	addStatement: function(statement) {
+		this.statements.push(statement);
+	},
 };
 
 var provNS = new Namespace("prov", "http://www.w3.org/ns/prov#");
@@ -347,21 +351,17 @@ xsdNS.QName = xsdNS.qname("QName");
 // Factory class
 function ProvJS(scope, parent) {
 	// The factory class
-    this.scope = (scope !== undefined) ? scope : new Bundle(); // TODO: Should this create a new document instead?
+    this.scope = (scope !== undefined) ? scope : new Document(); // TODO: Should this create a new document instead?
     this.parent = parent;
 }
 
-function Bundle() {
-	this.statements = new Array();
+function Bundle(identifier) {
+	Document.apply(this, arguments);
+	this.identifier = identifier;
 }
 
-Bundle.prototype = {
-	constructor: Bundle,
-
-	addStatement: function(statement) {
-		this.statements.push(statement);
-	},
-};
+Bundle.prototype = Object.create(Document.prototype);
+Bundle.prototype.constructor = Document;
 
 ProvJS.prototype = {
     // Exposing classes via the ProvJS class
@@ -371,6 +371,7 @@ ProvJS.prototype = {
 	Record: Record,
 	Element: Element,
 	Entity: Entity,
+	Bundle: Bundle,
 	Relation: Relation,
 	Derivation: Derivation,
 	Attribution: Attribution,
@@ -477,6 +478,18 @@ ProvJS.prototype = {
         bundle.addStatement(statement);
     },
 
+    document: function() {
+    	return new ProvJS();
+    },
+
+    bundle: function(identifier) {
+    	var eID = this.getValidQualifiedName(identifier);
+    	var newBundle = new Bundle(eID);
+    	var newProvJS = new ProvJS(newBundle, this);
+    	return newProvJS;
+    },
+
+
 	entity: function(identifier) {
         var eID = this.getValidQualifiedName(identifier);
         if (this.scope instanceof Record) {
@@ -560,24 +573,6 @@ ProvJS.prototype = {
 		    return 'ProvJS(' + this.scope.statements.join(", ") + ')';
 	},
 
-    // newDocument: function() {
-    // 	init(this, )
-    // 	return new ProvJS();
-    // },
-
-//    newBundle: function() {
-//    	var bundleW = new ProvJS();
-//     	bundleW.init(new Bundle(), this);
-//     	return bundleW;
-//    },
-
-    bundle: function() {
-        return new ProvJS(new Bundle(), this);
-    },
-    document: function() {
-        // return a ProvJS that wraps around a new document
-
-    },
 };
 
 // This is the default ProvJS object
