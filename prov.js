@@ -377,7 +377,7 @@ function Communication(informedActivity, informantActivity) {
     Relation.apply(this, arguments);
 }
 definePROVRelation(Communication,
-    "wasInformedBy", "informedActivity", "informantActivity" ]
+    "wasInformedBy", "informedActivity", "informantActivity" 
 );
 
 // Start is when an activity is deemed to have been started by an entity, known as trigger. 
@@ -445,7 +445,8 @@ function Invalidation(invalidatedEntity, invalidatingActivity) {
 // TODO: activity is optional in the spec but mandatory here
 definePROVRelation(Invalidation,
     "wasInvalidatedBy", "invalidatedEntity", "invalidatingActivity", [
-        ["time", requireDate]    ]
+        ["time", requireDate]    
+    ]
 );
 
 function Derivation(generatedEntity, usedEntity) {
@@ -498,7 +499,7 @@ function Association(activity, agent) {
 }
 definePROVRelation(Association, 
 	"wasAssociatedWith", "activity", "agent", [
-		"plan":requireQualifiedName
+		["plan", requireQualifiedName]
 	]
 );
 
@@ -514,7 +515,7 @@ function Delegation(delegate, responsible) {
 }
 definePROVRelation(Delegation, 
 	"actedOnBehalfOf", "delegate", "responsible", [ 
-		"activity":requireQualifiedName
+		["activity", requireQualifiedName]
 	] 
 );
 
