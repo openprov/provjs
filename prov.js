@@ -404,8 +404,9 @@ function getUniqueID(obj) {
     return obj.__provjson_id;
 }
 
-function Document(statements) {
-    this.statements = statements.slice(); // Cloning the list of statements
+function Document() {
+	this.statements = new Array();
+    // this.statements = statements.slice(); // Cloning the list of statements
     // TODO Collect all namespaces used in various QualifiedName to define in the prefix block
     // This can also be done in when a document is exported to PROV-N or PROV-JSON
 }
@@ -435,7 +436,10 @@ Document.prototype = {
             container[statement.provn_name][id] = stJSON;
         }
         return container;
-    }
+    },
+	addStatement: function(statement) {
+		this.statements.push(statement);
+	},
 };
 
 var provNS = new Namespace("prov", "http://www.w3.org/ns/prov#");
@@ -443,10 +447,19 @@ var xsdNS = new Namespace("xsd", "http://www.w3.org/2000/10/XMLSchema#");
 xsdNS.QName = xsdNS.qname("QName");
 
 // Factory class
-function ProvJS() {
+function ProvJS(scope, parent) {
 	// The factory class
-	this.wrap = new Array();
+    this.scope = (scope !== undefined) ? scope : new Document(); // TODO: Should this create a new document instead?
+    this.parent = parent;
 }
+
+function Bundle(identifier) {
+	Document.apply(this, arguments);
+	this.identifier = identifier;
+}
+
+Bundle.prototype = Object.create(Document.prototype);
+Bundle.prototype.constructor = Document;
 
 ProvJS.prototype = {
     // Exposing classes via the ProvJS class
@@ -456,19 +469,21 @@ ProvJS.prototype = {
 	Record: Record,
 	Element: Element,
 	Entity: Entity,
+	Bundle: Bundle,
 	Relation: Relation,
 	Derivation: Derivation,
 	Attribution: Attribution,
 
-	// All registered namespaces
+    // All registered namespaces
 	namespaces: {
 		"prov": provNS,
 		"xsd": xsdNS
 	},
 	// The PROV namespace
 	ns: provNS,
-		
+	parent: undefined,
 	constructor: ProvJS,
+
 	addNamespace: function(ns_or_prefix, uri) {
 		var ns;
 		if (ns_or_prefix instanceof Namespace) {
@@ -476,7 +491,8 @@ ProvJS.prototype = {
 		} else {
 			ns = new Namespace(ns_or_prefix, uri);
 		}
-		this.namespaces[ns.prefix] = ns;
+        var namespaces = (this.scope instanceof Record) ? this.parent.namespaces : this.namespaces;
+		namespaces[ns.prefix] = ns;
 		return ns;
 	},
 	getValidQualifiedName: function(identifier) {
@@ -484,12 +500,14 @@ ProvJS.prototype = {
 			return identifier;
 		}
 
+        var namespaces = (this.scope instanceof Record) ? this.parent.namespaces : this.namespaces;
+
 		// If id_str has a colon (:), check if the part before the colon is a registered prefix
 		var components = identifier.split(":", 2);
 		if (components.length === 2) {
 			var prefix = components[0];
-			if (prefix in this.namespaces) {
-				return this.namespaces[prefix].qname(components[1]);
+			if (prefix in namespaces) {
+				return namespaces[prefix].qname(components[1]);
 			}
 		}
 			
@@ -552,11 +570,42 @@ ProvJS.prototype = {
 	},
 
 	// PROV statements
+    addStatement: function(statement) {
+        // Add the statement to the current bundle
+        var bundle = (this.scope instanceof Record) ? this.parent.scope : this.scope;
+        bundle.addStatement(statement);
+    },
+
+    document: function() {
+    	return new ProvJS();
+    },
+
+    bundle: function(identifier) {
+    	var eID = this.getValidQualifiedName(identifier);
+    	var newBundle = new Bundle(eID);
+    	var newProvJS = new ProvJS(newBundle, this);
+    	return newProvJS;
+    },
+
+
 	entity: function(identifier) {
-		var ret = new Entity(this.getValidQualifiedName(identifier));
-		this.pushContext(ret);
-		return this;
+        var eID = this.getValidQualifiedName(identifier);
+        if (this.scope instanceof Record) {
+            // Setting the entity attribute
+            this.scope.entity = eID;
+            return this;
+        }
+        else {
+            var newEntity = new Entity(eID);
+            this.addStatement(newEntity);
+            var newProvJS = new ProvJS(newEntity, this);
+            return newProvJS;
+        }
+
 	},
+    // TODO: similar to the above for agent
+    // TODO: similar to the above for activity
+
 	wasDerivedFrom: function() {
 		var statement;
 		var l = arguments.length;
@@ -569,18 +618,20 @@ ProvJS.prototype = {
 				statement.setAttr(this.getValidQualifiedName(arguments[pos - 1]), this.getValidLiteral(arguments[pos]));
 			}
 		}
-		this.pushContext(statement);
-		return this;
+		this.addStatement(statement);
+		var newProvJS = new ProvJS(statement, this);
+        return newProvJS;
 	},
     wasAttributedTo: function(entity, agent) {
         var statement = new Attribution(this.getValidQualifiedName(entity), this.getValidQualifiedName(agent));
         // TODO Handle optional attribute-value pairs
-        this.pushContext(statement);
-        return this;
+        this.addStatement(statement);
+        var newProvJS = new ProvJS(statement, this);
+        return newProvJS;
     },
     // Setting properties
     attr: function(attr_name, attr_value) {
-		var context = this.getContext();
+		var context = this.scope;
 		if (context===undefined) {
 			return(undefined);
 		}
@@ -594,7 +645,7 @@ ProvJS.prototype = {
 		return this;
 	},
 	id: function() {
-		var context = this.getContext();
+		var context = this.scope;
 		if (context === undefined) {
 			return(undefined);
 		}
@@ -605,34 +656,21 @@ ProvJS.prototype = {
 			return(this);
 		}
 	},
+
 	// TODO prov:label
 	// TODO prov:type
 	// TODO prov:value
 	// TODO prov:location
 	// TODO prov:role
 
-
 	// TODO Collect all created records
 	toString: function() {
-		return 'ProvJS('+this.wrap.join(", ")+')';
+        if (this.scope instanceof Record)
+            return 'ProvJS(' + this.scope + ')';
+        else
+		    return 'ProvJS(' + this.scope.statements.join(", ") + ')';
 	},
 
-    // Context management
-	pushContext: function(o) {
-		this.wrap.push(o);
-	},
-	getContext: function() {
-		var l = this.wrap.length;
-		if (l===0) {
-			return undefined;
-		} else {
-			return this.wrap[l-1];
-		}
-	},
-	// TODO Construct documents and bundles
-    buildDocument: function() {
-        return new Document(this.wrap);
-    }
 };
 
 // This is the default ProvJS object
