@@ -347,8 +347,26 @@ xsdNS.QName = xsdNS.qname("QName");
 // Factory class
 function ProvJS() {
 	// The factory class
-	this.wrap = new Array();
+	this.bundle = new Bundle();
 }
+
+function Bundle() {
+	this.statements = new Array();
+}
+
+Bundle.prototype = {
+	constructor: Bundle,
+
+	// All registered namespaces
+	namespaces: {
+		"prov": provNS,
+		"xsd": xsdNS
+	},
+
+	addStatement: function(statement) {
+		this.statements.push(statement);
+	},
+};
 
 ProvJS.prototype = {
     // Exposing classes via the ProvJS class
@@ -362,15 +380,14 @@ ProvJS.prototype = {
 	Derivation: Derivation,
 	Attribution: Attribution,
 
-	// All registered namespaces
-	namespaces: {
-		"prov": provNS,
-		"xsd": xsdNS
-	},
 	// The PROV namespace
 	ns: provNS,
-		
+	parent: undefined,
 	constructor: ProvJS,
+	init: function(context, parent) {
+		this.bundle = context;
+		this.parent = parent;
+	},
 	addNamespace: function(ns_or_prefix, uri) {
 		var ns;
 		if (ns_or_prefix instanceof Namespace) {
@@ -378,7 +395,7 @@ ProvJS.prototype = {
 		} else {
 			ns = new Namespace(ns_or_prefix, uri);
 		}
-		this.namespaces[ns.prefix] = ns;
+		this.bundle.namespaces[ns.prefix] = ns;
 		return ns;
 	},
 	getValidQualifiedName: function(identifier) {
@@ -390,8 +407,8 @@ ProvJS.prototype = {
 		var components = identifier.split(":", 2);
 		if (components.length === 2) {
 			var prefix = components[0];
-			if (prefix in this.namespaces) {
-				return this.namespaces[prefix].qname(components[1]);
+			if (prefix in this.bundle.namespaces) {
+				return this.bundle.namespaces[prefix].qname(components[1]);
 			}
 		}
 			
@@ -456,7 +473,7 @@ ProvJS.prototype = {
 	// PROV statements
 	entity: function(identifier) {
 		var ret = new Entity(this.getValidQualifiedName(identifier));
-		this.pushContext(ret);
+		this.bundle.addStatement(ret);
 		return this;
 	},
 	wasDerivedFrom: function() {
@@ -471,13 +488,13 @@ ProvJS.prototype = {
 				statement.setAttr(this.getValidQualifiedName(arguments[pos - 1]), this.getValidLiteral(arguments[pos]));
 			}
 		}
-		this.pushContext(statement);
+		this.bundle.addStatement(statement);
 		return this;
 	},
     wasAttributedTo: function(entity, agent) {
         var statement = new Attribution(this.getValidQualifiedName(entity), this.getValidQualifiedName(agent));
         // TODO Handle optional attribute-value pairs
-        this.pushContext(statement);
+        this.bundle.addStatement(statement);
         return this;
     },
     // Setting properties
@@ -507,34 +524,34 @@ ProvJS.prototype = {
 			return(this);
 		}
 	},
+
+	getContext: function() {
+		if (this.bundle.statements.length == 0) {
+			return (undefined);
+		}
+		return this.bundle.statements[this.bundle.statements.length-1];
+	},
 	// TODO prov:label
 	// TODO prov:type
 	// TODO prov:value
 	// TODO prov:location
 	// TODO prov:role
 
-
 	// TODO Collect all created records
 	toString: function() {
-		return 'ProvJS('+this.wrap.join(", ")+')';
+		return 'ProvJS('+this.bundle.statements.join(", ")+')';
 	},
 
-    // Context management
-	pushContext: function(o) {
-		this.wrap.push(o);
-	},
-	getContext: function() {
-		var l = this.wrap.length;
-		if (l===0) {
-			return undefined;
-		} else {
-			return this.wrap[l-1];
-		}
-	},
-	// TODO Construct documents and bundles
-    buildDocument: function() {
-        return new Document(this.wrap);
-    }
+    // newDocument: function() {
+    // 	init(this, )
+    // 	return new ProvJS();
+    // },
+
+    newBundle: function() {
+    	var bundleW = new ProvJS();
+     	bundleW.init(new Bundle(), this);
+     	return bundleW;
+     }
 };
 
 // This is the default ProvJS object
