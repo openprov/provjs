@@ -361,7 +361,7 @@ definePROVRelation(Generation,
 //     time: an optional "usage time" (t), the time at which the entity started to be used;
 //     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this usage.
 // While each of id, entity, time, and attributes is optional, at least one of them must be present.
-function Usage(userActivity, usedEntity) {
+function Usage(activity, entity) {
     Relation.apply(this, arguments);
 }
 // TODO: entity is optional in the standard but mandatory here
@@ -378,11 +378,11 @@ definePROVRelation(Usage,
 //     informed: the identifier (a2) of the informed activity;
 //     informant: the identifier (a1) of the informant activity;
 //     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this communication.
-function Communication(informedActivity, informantActivity) {
+function Communication(informed, informant) {
     Relation.apply(this, arguments);
 }
 definePROVRelation(Communication,
-    "wasInformedBy", "informedActivity", "informantActivity" 
+    "wasInformedBy", "informed", "informant" 
 );
 
 // Start is when an activity is deemed to have been started by an entity, known as trigger. 
@@ -398,13 +398,13 @@ definePROVRelation(Communication,
 //     time: the optional time (t) at which the activity was started;
 //     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this activity start.
 // While each of id, trigger, starter, time, and attributes is optional, at least one of them must be present.
-function Start(startedActivity, triggerEntity) {
+function Start(activity, trigger) {
 	Relation.apply(this, arguments);
 }
 // TODO: triggerEntity and starterActivity are both optional as long as one of them is present
 definePROVRelation(Start,
-	"wasStartedBy", "startedActivity", "triggerEntity", [
-		["starterActivity", requireQualifiedName],
+	"wasStartedBy", "activity", "trigger", [
+		["starter", requireQualifiedName],
 		["time", requireDate]
 	]
 );
@@ -422,13 +422,13 @@ definePROVRelation(Start,
 //     time: the optional time (t) at which the activity was ended;
 //     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this activity end.
 // While each of id, trigger, ender, time, and attributes is optional, at least one of them must be present.
-function End(endedActivity, triggerEntity) {
+function End(activity, trigger) {
 	Relation.apply(this, arguments);
 }
 // TODO: triggerEntity and enderActivity are both optional as long as one of them is present
 definePROVRelation(End,
-	"wasEndedBy", "endedActivity", "triggerEntity", [
-		["enderActivity", requireQualifiedName],
+	"wasEndedBy", "activity", "trigger", [
+		["ender", requireQualifiedName],
 		["time", requireDate]
 	]
 );
@@ -444,12 +444,12 @@ definePROVRelation(End,
 //     time: an optional "invalidation time", the time at which the entity began to be invalidated;
 //     attributes: an optional set of attribute-value pairs representing additional information about this invalidation.
 // While each of id, activity, time, and attributes is optional, at least one of them must be present.
-function Invalidation(invalidatedEntity, invalidatingActivity) {
+function Invalidation(entity, activity) {
     Relation.apply(this, arguments);
 }
 // TODO: activity is optional in the spec but mandatory here
 definePROVRelation(Invalidation,
-    "wasInvalidatedBy", "invalidatedEntity", "invalidatingActivity", [
+    "wasInvalidatedBy", "entity", "activity", [
         ["time", requireDate]    
     ]
 );
@@ -573,12 +573,12 @@ definePROVRelation(Alternate,
 //     collection: an identifier (c) for the collection whose member is asserted;
 //     entity: the identifier e of an entity that is member of the collection.
 // Membership is not, as defined here, also an influence, and therefore does not have an id and attributes.
-function Membership(collection, member) {
+function Membership(collection, entity) {
     Relation.apply(this, arguments);
 }
 // TODO: delete the identifier and the attributes 
 definePROVRelation(Membership,
-    "hadMember", "collection", "member"
+    "hadMember", "collection", "entity"
 );
 
 // TODO: Bundles
