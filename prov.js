@@ -340,9 +340,9 @@ function definePROVRelation(cls, provn_name, from, to, extras) {
 function Generation(generatedEntity) {
     Relation.apply(this, arguments);
 }
+// TODO: activity is optional in the standard but mandatory here
 definePROVRelation(Generation,
-    "wasGeneratedBy", "generatedEntity", [
-        ["activity", requireQualifiedName],
+    "wasGeneratedBy", "generatedEntity", "generatingActivity", [
         ["time", requireDate]    ]
 );
 
@@ -359,9 +359,9 @@ definePROVRelation(Generation,
 function Usage(userActivity) {
     Relation.apply(this, arguments);
 }
+// TODO: entity is optional in the standard but mandatory here
 definePROVRelation(Usage,
-    "used", "userActivity", [
-        ["usedEntity", requireQualifiedName],
+    "used", "userActivity", "usedEntity", [
         ["time", requireDate]
     ]
 );
