@@ -498,21 +498,65 @@ ProvJS.prototype = {
     	return newProvJS;
     },
 
-
-	entity: function(identifier) {
+    _setProp: function(property, identifier) {
         var eID = this.getValidQualifiedName(identifier);
-        if (this.scope instanceof Record) {
+		if (this.scope instanceof Record) {
             // Setting the entity attribute
-            this.scope.entity = eID;
+            this._propertyGuard(property);
+            this.scope[property] = eID;
             return this;
         }
         else {
+			throw new Error("Unable to access this property here.");
+        }
+    },
+
+	entity: function(identifier) {
+        if (this.scope instanceof Record) {
+        	return this._setProp('entity', identifier);
+        }
+        else {
+        	this._documentOnly();
+        	var eID = this.getValidQualifiedName(identifier);
             var newEntity = new Entity(eID);
             this.addStatement(newEntity);
             var newProvJS = new ProvJS(newEntity, this);
             return newProvJS;
         }
+	},
+	agent: function(identifier) {
+        if (this.scope instanceof Record) {
+        	return this._setProp('agent', identifier);
+        }
+        else {
+        	this._documentOnly();
+        	var eID = this.getValidQualifiedName(identifier);
+            var newAgent = new Agent(eID);
+            this.addStatement(newAgent);
+            var newProvJS = new ProvJS(newAgent, this);
+            return newProvJS;
+        }
+	},
+	activity: function(identifier) {
+        if (this.scope instanceof Record) {
+        	return this._setProp('activity', identifier);
+        }
+        else {
+        	this._documentOnly();
+        	var eID = this.getValidQualifiedName(identifier);
+            var newActivity = new Activity(eID);
+            this.addStatement(newActivity);
+            var newProvJS = new ProvJS(newActivity, this);
+            return newProvJS;
+        }
+	},
 
+	_propertyGuard: function(property) {
+		console.log("Can we access "+property+" in ");
+		console.log(this.scope);
+		if(!(property in this.scope)) {
+			throw new Error("Unable to access this property here.");
+		}
 	},
 
 	_documentOnly: function() {
@@ -591,6 +635,38 @@ ProvJS.prototype = {
 	},
 
 };
+
+var props = ['delegate',
+	'responsible',
+    'informedActivity',
+    'informantActivity',
+	'starterActivity',
+    'endedActivity',
+    'enderActivity',
+    'invalidatingActivity',
+    'usedEntity',
+    'generatedEntity',
+    'triggerEntity',
+    'invalidatedEntity',
+    'specificEntity',
+    'generalEntity',
+    'alternate1',
+    'alternate2',
+    'collection',
+    'member',
+    'responsible'
+    ];
+
+function createFunc(prop) {
+	return function(identifier) {
+		return this._setProp(prop, identifier);
+	};
+}
+
+for(var i=0; i<props.length; i++) {
+	var prop = props[i];
+	ProvJS.prototype[prop] = createFunc(prop);
+}
 
 // This is the default ProvJS object
 var rootProvJS = new ProvJS();
