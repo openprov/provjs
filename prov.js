@@ -342,12 +342,12 @@ function definePROVRelation(cls, provn_name, from, to, extras) {
 //     time: an optional "generation time" (t), the time at which the entity was completely created;
 //     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this generation.
 // While each of id, activity, time, and attributes is optional, at least one of them must be present.
-function Generation(generatedEntity, generatingActivity) {
+function Generation(entity, activity) {
     Relation.apply(this, arguments);
 }
 // TODO: activity is optional in the standard but mandatory here
 definePROVRelation(Generation,
-    "wasGeneratedBy", "generatedEntity", "generatingActivity", [
+    "wasGeneratedBy", "entity", "activity", [
         ["time", requireDate]    ]
 );
 
@@ -366,7 +366,7 @@ function Usage(userActivity, usedEntity) {
 }
 // TODO: entity is optional in the standard but mandatory here
 definePROVRelation(Usage,
-    "used", "userActivity", "usedEntity", [
+    "used", "activity", "entity", [
         ["time", requireDate]
     ]
 );
@@ -547,6 +547,7 @@ definePROVRelation(Influence,
 function Specialization(specificEntity, generalEntity) {
     Relation.apply(this, arguments);
 }
+// TODO: delete the identifier and the attributes 
 definePROVRelation(Specialization,
     "specializationOf", "specificEntity", "generalEntity"
 );
@@ -559,6 +560,7 @@ definePROVRelation(Specialization,
 function Alternate(alternate1, alternate2) {
     Relation.apply(this, arguments);
 }
+// TODO: delete the identifier and the attributes 
 definePROVRelation(Alternate,
     "alternateOf", "alternate1", "alternate2"
 );
@@ -574,6 +576,7 @@ definePROVRelation(Alternate,
 function Membership(collection, member) {
     Relation.apply(this, arguments);
 }
+// TODO: delete the identifier and the attributes 
 definePROVRelation(Membership,
     "hadMember", "collection", "member"
 );
@@ -828,15 +831,16 @@ ProvJS.prototype = {
         }
         else {
         	// TODO: get the start time and end time from the list of arguments
-        	var st = this.getValidDate();
-        	var et = this.getValidDate();
+        	if (arguments.length >= 2) {
+	        	var st = this.getValidDate(arguments[1]); 
+	        	var et = this.getValidDate(arguments[2]);
+        	}
             var newActivity = new Activity(aID, st, et);
             this.addStatement(newActivity);
             var newProvJS = new ProvJS(newActivity, this);
             return newProvJS;
         }
 	},
-
 
 	wasDerivedFrom: function() {
 		var statement;
