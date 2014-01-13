@@ -459,8 +459,24 @@ definePROVRelation(Derivation,
     ]
 );
 
-
 // TODO: Revision, Quotation, PrimarySource
+
+// A revision is a derivation for which the resulting entity is a revised version of some original.
+// The implication here is that the resulting entity contains substantial content from the original. 
+// A revision relation is a kind of derivation relation from a revised entity to a preceding entity. 
+// The type of a revision relation is denoted by: prov:Revision. PROV defines no revision-specific attributes.
+// wasDerivedFrom(e1, e2, [ prov:type='prov:Revision' ])
+
+// A quotation is the repeat of (some or all of) an entity, such as text or image, by someone who may or may not be its original author.
+// A quotation relation is a kind of derivation relation, for which an entity was derived from a preceding entity by copying, or "quoting", some or all of it. 
+// The type of a quotation relation is denoted by: prov:Quotation. PROV defines no quotation-specific attributes.
+// wasDerivedFrom(e1, e2, [ prov:type='prov:Quotation' ])
+
+// A primary source for a topic refers to something produced by some agent with direct experience and knowledge about the topic, at the time of the topic's study, without benefit from hindsight.
+// A primary source relation is a kind of a derivation relation from secondary materials to their primary sources. 
+// It is recognized that the determination of primary sources can be up to interpretation, and should be done according to conventions accepted within the application's domain. 
+// The type of a primary source relation is denoted by: prov:PrimarySource. PROV defines no attributes specific to primary source.
+// wasDerivedFrom(e1, e2, [ prov:type='prov:PrimarySource' ])
 
 function Attribution(entity, agent) {
     Relation.apply(this, arguments);
@@ -469,14 +485,95 @@ definePROVRelation(Attribution,
     "wasAttributedTo", "entity", "agent"
 );
 
-// TODO: Association
-// TODO: Delegation
-// TODO: Influence
-// TODO: Alternate
-// TODO: Specialization
-// TODO: Membership
+// An activity association is an assignment of responsibility to an agent for an activity, indicating that the agent had a role in the activity. 
+// wasAssociatedWith(id; a, ag, pl, attrs), has:
+//     id: an optional identifier for the association between an activity and an agent;
+//     activity: an identifier (a) for the activity;
+//     agent: an optional identifier (ag) for the agent associated with the activity;
+//     plan: an optional identifier (pl) for the plan the agent relied on in the context of this activity;
+//     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this association of this activity with this agent.
+// While each of id, agent, plan, and attributes is optional, at least one of them must be present.
+function Association(activity, agent) {
+	Relation.apply(this, arguments);
+}
+definePROVRelation(Association, 
+	"wasAssociatedWith", "activity", "agent", [
+		"plan":requireQualifiedName
+	]
+);
+
+// Delegation is the assignment of authority and responsibility to an agent (by itself or by another agent) to carry out a specific activity as a delegate or representative, while the agent it acts on behalf of retains some responsibility for the outcome of the delegated work.
+// actedOnBehalfOf(id; ag2, ag1, a, attrs), has:
+//     id: an optional identifier for the delegation link between delegate and responsible;
+//     delegate: an identifier (ag2) for the agent associated with an activity, acting on behalf of the responsible agent;
+//     responsible: an identifier (ag1) for the agent, on behalf of which the delegate agent acted;
+//     activity: an optional identifier (a) of an activity for which the delegation link holds;
+//     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this delegation link.
+function Delegation(delegate, responsible) {
+	Relation.apply(this, arguments);
+}
+definePROVRelation(Delegation, 
+	"actedOnBehalfOf", "delegate", "responsible", [ 
+		"activity":requireQualifiedName
+	] 
+);
+
+// Influence is the capacity of an entity, activity, or agent to have an effect on the character, development, or behavior of another by means of usage, start, end, generation, invalidation, communication, derivation, attribution, association, or delegation.
+// An influence relation between two objects o2 and o1 is a generic dependency of o2 on o1 that signifies some form of influence of o1 on o2.
+// wasInfluencedBy(id; o2, o1, attrs), has:
+//     id: an optional identifier identifying the relation;
+//     influencee: an identifier (o2) for an entity, activity, or agent;
+//     influencer: an identifier (o1) for an ancestor entity, activity, or agent that the former depends on;
+//     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this relation.
+function Influence(influencee, influencer) {
+    Relation.apply(this, arguments);
+}
+definePROVRelation(Influence,
+    "wasInfluencedBy", "influencee", "influencer"
+);
+
+// An entity that is a specialization of another shares all aspects of the latter, and additionally presents more specific aspects of the same thing as the latter. 
+// In particular, the lifetime of the entity being specialized contains that of any specialization.
+// specializationOf(infra, supra), has:
+//     specificEntity: an identifier (infra) of the entity that is a specialization of the general entity (supra);
+//     generalEntity: an identifier (supra) of the entity that is being specialized.
+// A specialization is not, as defined here, also an influence, and therefore does not have an id and attributes.
+function Specialization(specificEntity, generalEntity) {
+    Relation.apply(this, arguments);
+}
+definePROVRelation(Specialization,
+    "specializationOf", "specificEntity", "generalEntity"
+);
+
+// Two alternate entities present aspects of the same thing. These aspects may be the same or different, and the alternate entities may or may not overlap in time.
+// alternateOf(e1, e2), has:
+//     alternate1: an identifier (e1) of the first of the two entities;
+//     alternate2: an identifier (e2) of the second of the two entities.
+// An alternate is not, as defined here, also an influence, and therefore does not have an id and attributes.
+function Alternate(alternate1, alternate2) {
+    Relation.apply(this, arguments);
+}
+definePROVRelation(Alternate,
+    "alternateOf", "alternate1", "alternate2"
+);
+
+// TODO: Collection and EmptyCollection - do we define special classes for them?
+
+// A membership relation is defined for stating the members of a Collection.
+// Membership is the belonging of an entity to a collection.
+// hadMember(c, e), has:
+//     collection: an identifier (c) for the collection whose member is asserted;
+//     entity: the identifier e of an entity that is member of the collection.
+// Membership is not, as defined here, also an influence, and therefore does not have an id and attributes.
+function Membership(collection, member) {
+    Relation.apply(this, arguments);
+}
+definePROVRelation(Membership,
+    "hadMember", "collection", "member"
+);
 
 // TODO: Bundles
+
 var uniqueIDCount = 0;
 function getUniqueID(obj) {
     // Generating unique identifiers for PROV-JSON export
