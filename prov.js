@@ -840,14 +840,19 @@ ProvJS.prototype = {
             return newProvJS;
         }
 	},
-	activity: function(identifier) {
+	activity: function(identifier, startTime, endTime) {
         if (this.scope instanceof Record) {
         	return this._setProp('activity', identifier);
         }
         else {
         	this._documentOnly();
         	var eID = this.getValidQualifiedName(identifier);
-            var newActivity = new Activity(eID);
+        	// TODO: get the start time and end time from the list of arguments
+        	if (startTime !== undefined)
+	        	startTime = this.getValidDate(startTime);
+        	if (endTime !== undefined)
+	        	endTime = this.getValidDate(endTime);
+            var newActivity = new Activity(eID, startTime, endTime);
             this.addStatement(newActivity);
             var newProvJS = new ProvJS(newActivity, this);
             return newProvJS;
@@ -866,39 +871,6 @@ ProvJS.prototype = {
 		if(!(this.scope instanceof Document)) {
 			throw new Error("Unable to call this method here.");
 		}
-	},
-	agent: function(identifier) {
-        var agID = this.getValidQualifiedName(identifier);
-        if (this.scope instanceof Record) {
-            // Setting the agent identifier
-            this.scope.agent = agID;
-            return this;
-        }
-        else {
-            var newAgent = new Agent(agID);
-            this.addStatement(newAgent);
-            var newProvJS = new ProvJS(newAgent, this);
-            return newProvJS;
-        }
-	},
-	activity: function(identifier) {
-        var aID = this.getValidQualifiedName(identifier);
-        if (this.scope instanceof Record) {
-            // Setting the activity identifier
-            this.scope.activity = aID;
-            return this;
-        }
-        else {
-        	// TODO: get the start time and end time from the list of arguments
-        	if (arguments.length >= 2) {
-	        	var st = this.getValidDate(arguments[1]); 
-	        	var et = this.getValidDate(arguments[2]);
-        	}
-            var newActivity = new Activity(aID, st, et);
-            this.addStatement(newActivity);
-            var newProvJS = new ProvJS(newActivity, this);
-            return newProvJS;
-        }
 	},
 
 	wasDerivedFrom: function() {
