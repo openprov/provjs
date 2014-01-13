@@ -759,6 +759,17 @@ ProvJS.prototype = {
 			ret = this.literal(literal);
 		return ret;
 	},
+	getValidDate: function(dt) {
+		var ret;
+		if (dt instanceof Date) {
+			ret = new Date(dt);
+		} else if (typeof dt === "string" ) {
+			ret = new Date(Date.parse(dt));			
+		} else if (typeof dt === "number" ) {
+			ret = new Date(dt);
+		}
+		return ret;
+	},
 
 	// PROV statements
     addStatement: function(statement) {
