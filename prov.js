@@ -337,7 +337,7 @@ function definePROVRelation(cls, provn_name, from, to, extras) {
 //     time: an optional "generation time" (t), the time at which the entity was completely created;
 //     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this generation.
 // While each of id, activity, time, and attributes is optional, at least one of them must be present.
-function Generation(generatedEntity) {
+function Generation(generatedEntity, generatingActivity) {
     Relation.apply(this, arguments);
 }
 // TODO: activity is optional in the standard but mandatory here
@@ -356,7 +356,7 @@ definePROVRelation(Generation,
 //     time: an optional "usage time" (t), the time at which the entity started to be used;
 //     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this usage.
 // While each of id, entity, time, and attributes is optional, at least one of them must be present.
-function Usage(userActivity) {
+function Usage(userActivity, usedEntity) {
     Relation.apply(this, arguments);
 }
 // TODO: entity is optional in the standard but mandatory here
@@ -376,14 +376,77 @@ definePROVRelation(Usage,
 function Communication(informedActivity, informantActivity) {
     Relation.apply(this, arguments);
 }
-definePROVRelation(Derivation,
+definePROVRelation(Communication,
     "wasInformedBy", "informedActivity", "informantActivity" ]
 );
 
-// TODO: Start
-// TODO: End
-// TODO: Invalidation
-// TODO: decide on whether to support special cases for Revision, Quotation, PrimarySource
+// Start is when an activity is deemed to have been started by an entity, known as trigger. 
+// The activity did not exist before its start. 
+// Any usage, generation, or invalidation involving an activity follows the activity's start. 
+// A start may refer to a trigger entity that set off the activity, or to an activity, known as starter, that generated the trigger.
+// Given that a start is when an activity is deemed to have started, it is instantaneous.
+// wasStartedBy(id; a2, e, a1, t, attrs), has:
+//     id: an optional identifier for the activity start;
+//     activity: an identifier (a2) for the started activity;
+//     trigger: an optional identifier (e) for the entity triggering the activity;
+//     starter: an optional identifier (a1) for the activity that generated the (possibly unspecified) entity (e);
+//     time: the optional time (t) at which the activity was started;
+//     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this activity start.
+// While each of id, trigger, starter, time, and attributes is optional, at least one of them must be present.
+function Start(startedActivity, triggerEntity) {
+	Relation.apply(this, arguments);
+}
+// TODO: triggerEntity and starterActivity are both optional as long as one of them is present
+definePROVRelation(Start,
+	"wasStartedBy", "startedActivity", "triggerEntity", [
+		["starterActivity", requireQualifiedName],
+		["time", requireDate]
+	]
+);
+
+// End is when an activity is deemed to have been ended by an entity, known as trigger. 
+// The activity no longer exists after its end. 
+// Any usage, generation, or invalidation involving an activity precedes the activity's end. 
+// An end may refer to a trigger entity that terminated the activity, or to an activity, known as ender that generated the trigger.
+// Given that an end is when an activity is deemed to have ended, it is instantaneous.
+// wasEndedBy(id; a2, e, a1, t, attrs), has:
+//     id: an optional identifier for the activity end;
+//     activity: an identifier (a2) for the ended activity;
+//     trigger: an optional identifier (e) for the entity triggering the activity ending;
+//     ender: an optional identifier (a1) for the activity that generated the (possibly unspecified) entity (e);
+//     time: the optional time (t) at which the activity was ended;
+//     attributes: an optional set (attrs) of attribute-value pairs representing additional information about this activity end.
+// While each of id, trigger, ender, time, and attributes is optional, at least one of them must be present.
+function End(endedActivity, triggerEntity) {
+	Relation.apply(this, arguments);
+}
+// TODO: triggerEntity and enderActivity are both optional as long as one of them is present
+definePROVRelation(End,
+	"wasEndedBy", "endedActivity", "triggerEntity", [
+		["enderActivity", requireQualifiedName],
+		["time", requireDate]
+	]
+);
+
+// Invalidation is the start of the destruction, cessation, or expiry of an existing entity by an activity. 
+// The entity is no longer available for use (or further invalidation) after invalidation. 
+// Any generation or usage of an entity precedes its invalidation.
+// Given that an invalidation is the start of destruction, cessation, or expiry, it is instantaneous.
+// wasInvalidatedBy(id; e, a, t, attrs), has:
+//     id: an optional identifier for a invalidation;
+//     entity: an identifier for the invalidated entity;
+//     activity: an optional identifier for the activity that invalidated the entity;
+//     time: an optional "invalidation time", the time at which the entity began to be invalidated;
+//     attributes: an optional set of attribute-value pairs representing additional information about this invalidation.
+// While each of id, activity, time, and attributes is optional, at least one of them must be present.
+function Invalidation(invalidatedEntity, invalidatingActivity) {
+    Relation.apply(this, arguments);
+}
+// TODO: activity is optional in the spec but mandatory here
+definePROVRelation(Invalidation,
+    "wasInvalidatedBy", "invalidatedEntity", "invalidatingActivity", [
+        ["time", requireDate]    ]
+);
 
 function Derivation(generatedEntity, usedEntity) {
     Relation.apply(this, arguments);
@@ -395,6 +458,9 @@ definePROVRelation(Derivation,
         ["usage", requireQualifiedName]
     ]
 );
+
+
+// TODO: Revision, Quotation, PrimarySource
 
 function Attribution(entity, agent) {
     Relation.apply(this, arguments);
