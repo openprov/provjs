@@ -10,34 +10,6 @@
 (function (window, undefined) {
     "use strict";
 
-    // Date ISO format
-    if (!Date.prototype.toISOString) {
-        ( function () {
-
-            function pad(number) {
-                var r = String(number);
-                if (r.length === 1) {
-                    r = '0' + r;
-                }
-                return r;
-            }
-
-            Date.prototype.toISOString = function () {
-                if (this === undefined) {
-                    return "";
-                }
-                return this.getUTCFullYear() +
-                    '-' + pad(this.getUTCMonth() + 1) +
-                    '-' + pad(this.getUTCDate()) +
-                    'T' + pad(this.getUTCHours()) +
-                    ':' + pad(this.getUTCMinutes()) +
-                    ':' + pad(this.getUTCSeconds()) +
-                    '.' + String((this.getUTCMilliseconds() / 1000).toFixed(3)).slice(2, 5) +
-                    'Z';
-            };
-        }() );
-    }
-
     /* Simple classes of the PROV data model
     */
 
@@ -89,8 +61,8 @@
     }
     Literal.prototype.constructor = Literal;
     Literal.prototype.toString = function () {
-        // TODO Suport for multi-line strings (triple-quoted)
-        // TODO Check for special notation for some data types in PROV-N (e.g. QName)
+        // TODO: Support for multi-line strings (triple-quoted)
+        // TODO: Check for special notation for some data types in PROV-N (e.g. QName)
         return ('"' + this.value + '"' +
             ((this.langtag !== undefined) ? ('@' + this.langtag) : (' %% ' + this.datatype)));
     };
@@ -310,7 +282,7 @@
     }
 
     // Define a PROV relation from the arguments
-    function definePROVRelation(cls, provn_name, from, to, extras) {
+    function definePROVRelationClass(cls, provn_name, from, to, extras) {
         var proto = Object.create(Relation.prototype);
         proto.constructor = cls;
         proto.provn_name = provn_name;
@@ -349,7 +321,7 @@
     function Generation(entity, activity) {
         Relation.apply(this, arguments);
     }
-    definePROVRelation(Generation,
+    definePROVRelationClass(Generation,
         "wasGeneratedBy", "entity", "activity", [
             ["time", requireDate]
         ]
@@ -369,7 +341,7 @@
         Relation.apply(this, arguments);
     }
     // TODO: entity is optional in the standard but mandatory here
-    definePROVRelation(Usage,
+    definePROVRelationClass(Usage,
         "used", "activity", "entity", [
             ["time", requireDate]
         ]
@@ -385,7 +357,7 @@
     function Communication(informed, informant) {
         Relation.apply(this, arguments);
     }
-    definePROVRelation(Communication,
+    definePROVRelationClass(Communication,
         "wasInformedBy", "informed", "informant"
     );
 
@@ -406,7 +378,7 @@
         Relation.apply(this, arguments);
     }
     // TODO: triggerEntity and starterActivity are both optional as long as one of them is present
-    definePROVRelation(Start,
+    definePROVRelationClass(Start,
         "wasStartedBy", "activity", "trigger", [
             ["starter", requireQualifiedName],
             ["time", requireDate]
@@ -430,7 +402,7 @@
         Relation.apply(this, arguments);
     }
     // TODO: triggerEntity and enderActivity are both optional as long as one of them is present
-    definePROVRelation(End,
+    definePROVRelationClass(End,
         "wasEndedBy", "activity", "trigger", [
             ["ender", requireQualifiedName],
             ["time", requireDate]
@@ -452,7 +424,7 @@
         Relation.apply(this, arguments);
     }
     // TODO: activity is optional in the spec but mandatory here
-    definePROVRelation(Invalidation,
+    definePROVRelationClass(Invalidation,
         "wasInvalidatedBy", "entity", "activity", [
             ["time", requireDate]
         ]
@@ -461,7 +433,7 @@
     function Derivation(generatedEntity, usedEntity) {
         Relation.apply(this, arguments);
     }
-    definePROVRelation(Derivation,
+    definePROVRelationClass(Derivation,
         "wasDerivedFrom", "generatedEntity", "usedEntity", [
             ["activity", requireQualifiedName],
             ["generation", requireQualifiedName],
@@ -491,7 +463,7 @@
     function Attribution(entity, agent) {
         Relation.apply(this, arguments);
     }
-    definePROVRelation(Attribution,
+    definePROVRelationClass(Attribution,
         "wasAttributedTo", "entity", "agent"
     );
 
@@ -506,7 +478,7 @@
     function Association(activity, agent) {
         Relation.apply(this, arguments);
     }
-    definePROVRelation(Association,
+    definePROVRelationClass(Association,
         "wasAssociatedWith", "activity", "agent", [
             ["plan", requireQualifiedName]
         ]
@@ -522,7 +494,7 @@
     function Delegation(delegate, responsible) {
         Relation.apply(this, arguments);
     }
-    definePROVRelation(Delegation,
+    definePROVRelationClass(Delegation,
         "actedOnBehalfOf", "delegate", "responsible", [
             ["activity", requireQualifiedName]
         ]
@@ -538,7 +510,7 @@
     function Influence(influencee, influencer) {
         Relation.apply(this, arguments);
     }
-    definePROVRelation(Influence,
+    definePROVRelationClass(Influence,
         "wasInfluencedBy", "influencee", "influencer"
     );
 
@@ -552,7 +524,7 @@
         Relation.apply(this, arguments);
     }
     // TODO: delete the identifier and the attributes
-    definePROVRelation(Specialization,
+    definePROVRelationClass(Specialization,
         "specializationOf", "specificEntity", "generalEntity"
     );
 
@@ -565,7 +537,7 @@
         Relation.apply(this, arguments);
     }
     // TODO: delete the identifier and the attributes
-    definePROVRelation(Alternate,
+    definePROVRelationClass(Alternate,
         "alternateOf", "alternate1", "alternate2"
     );
 
@@ -581,7 +553,7 @@
         Relation.apply(this, arguments);
     }
     // TODO: delete the identifier and the attributes
-    definePROVRelation(Membership,
+    definePROVRelationClass(Membership,
         "hadMember", "collection", "entity"
     );
 
@@ -658,11 +630,11 @@
     // ProvJS is the main interface class of the library
     function ProvJS(scope, parent) {
         // The factory class
-        this.scope = (scope !== undefined) ? scope : new Document(); // TODO: Should this create a new document instead?
+        this.scope = (scope !== undefined) ? scope : new Document();
         this.parent = parent;
     }
 
-    function rel_maker(cls) {
+    function defineRelationFunction(cls) {
         var fn = function () {
             var statement, parameters;
             var usable_args = arguments.length;
@@ -845,7 +817,7 @@
 
         entity: function (identifier) {
             if (this.scope instanceof Record) {
-                return this._setProp('entity', identifier);
+                return this._accessProp('entity', identifier);
             }
             else {
                 this._documentOnly();
@@ -858,7 +830,7 @@
         },
         agent: function (identifier) {
             if (this.scope instanceof Record) {
-                return this._setProp('agent', identifier);
+                return this._accessProp('agent', identifier);
             }
             else {
                 this._documentOnly();
@@ -871,7 +843,7 @@
         },
         activity: function (identifier, startTime, endTime) {
             if (this.scope instanceof Record) {
-                return this._setProp('activity', identifier);
+                return this._accessProp('activity', identifier);
             }
             else {
                 this._documentOnly();
@@ -890,28 +862,36 @@
             }
         },
 
-        wasGeneratedBy: rel_maker(Generation),
-        used: rel_maker(Usage),
-        wasInformedBy: rel_maker(Communication),
-        wasStartedBy: rel_maker(Start),
-        wasEndedBy: rel_maker(End),
-        wasInvalidatedBy: rel_maker(Invalidation),
-        wasDerivedFrom: rel_maker(Derivation),
-        wasAttributedTo: rel_maker(Attribution),
-        wasAssociatedWith: rel_maker(Association),
-        actedOnBehalfOf: rel_maker(Delegation),
-        wasInfluencedBy: rel_maker(Influence),
-        specializationOf: rel_maker(Specialization),
-        alternateOf: rel_maker(Alternate),
-        hadMember: rel_maker(Membership),
+        wasGeneratedBy:     defineRelationFunction(Generation),
+        used:               defineRelationFunction(Usage),
+        wasInformedBy:      defineRelationFunction(Communication),
+        wasStartedBy:       defineRelationFunction(Start),
+        wasEndedBy:         defineRelationFunction(End),
+        wasInvalidatedBy:   defineRelationFunction(Invalidation),
+        wasDerivedFrom:     defineRelationFunction(Derivation),
+        wasAttributedTo:    defineRelationFunction(Attribution),
+        wasAssociatedWith:  defineRelationFunction(Association),
+        actedOnBehalfOf:    defineRelationFunction(Delegation),
+        wasInfluencedBy:    defineRelationFunction(Influence),
+        specializationOf:   defineRelationFunction(Specialization),
+        alternateOf:        defineRelationFunction(Alternate),
+        hadMember:          defineRelationFunction(Membership),
+
         // Setting properties
-        _setProp: function (property, identifier) {
-            var eID = this.getValidQualifiedName(identifier);
+        _accessProp: function (property, newValue) {
             if (this.scope instanceof Record) {
                 // Setting the entity attribute
                 this._propertyGuard(property);
-                this.scope[property] = eID;
-                return this;
+                // If the new value is not provided
+                if (newValue === undefined) {
+                    // Returning the value of the property
+                    return this.scope[property];
+                }
+                else {
+                    // Setting the property
+                    this.scope[property] = this.getValidQualifiedName(newValue);
+                    return this;
+                }
             }
             else {
                 throw new Error("Unable to access this property here.");
@@ -957,13 +937,13 @@
             }
         },
 
+        // TODO prov:time, prov:startTime, prov:endTime
         // TODO prov:label
         // TODO prov:type
         // TODO prov:value
         // TODO prov:location
         // TODO prov:role
 
-        // TODO Collect all created records
         toString: function () {
             if (this.scope instanceof Record) {
                 return 'ProvJS(' + this.scope + ')';
@@ -975,7 +955,9 @@
 
     };
 
-    var props = ['delegate',
+    // List of all properties that expect a PROV QualifiedName
+    var allQualifiedNameProperties = [
+        'delegate',
         'responsible',
         'informedActivity',
         'informantActivity',
@@ -995,16 +977,15 @@
         'member',
         'responsible'
     ];
-
-    function createFunc(prop) {
+    // Adding setter functions for all the properties above
+    function _createSetPropFunc(prop) {
         return function (identifier) {
-            return this._setProp(prop, identifier);
+            return this._accessProp(prop, identifier);
         };
     }
-
-    for (var i = 0; i < props.length; i++) {
-        var prop = props[i];
-        ProvJS.prototype[prop] = createFunc(prop);
+    for (var i = 0; i < allQualifiedNameProperties.length; i++) {
+        var prop = allQualifiedNameProperties[i];
+        ProvJS.prototype[prop] = _createSetPropFunc(prop);
     }
 
     // This is the default ProvJS object
