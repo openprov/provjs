@@ -54,7 +54,12 @@
 			// doc.entity("ex:foo");
 			// console.log(doc);
 			prov.wasDerivedFrom("ex:e2", "ex:e1").generatedEntity("ex:e4");
-		}
+
+            console.log("PROV-JSON export of the root document:")
+            var doc = prov.scope;
+            var provjson = doc.buildPROVJSON();
+            console.log(JSON.stringify(provjson, null, "  "));
+        }
 		</script>
 	</head>
 	<body>
