@@ -82,6 +82,20 @@
             (this.langtag === other.langtag));
     };
 
+    // Validation functions
+    // TODO These validation function currently does not allow for reporting which value is offending the rules
+    function requireQualifiedName(value) {
+        if (!(value instanceof QualifiedName)) {
+            throw new Error("Expected a prov.QualifiedName value");
+        }
+    }
+
+    function requireDate(value) {
+        if (!(value instanceof Date)) {
+            throw new Error("Expected a Date value");
+        }
+    }
+
     // PROV Record
     function Record() {
         var i, l;
@@ -259,20 +273,6 @@
         }
         return this.provn_name + "(" + output.join(", ") + ")";
     };
-
-    // Validation functions
-    // TODO These validation function currently does not allow for reporting which value is offending the rules
-    function requireQualifiedName(value) {
-        if (!(value instanceof QualifiedName)) {
-            throw new Error("Expected a prov.QualifiedName value");
-        }
-    }
-
-    function requireDate(value) {
-        if (!(value instanceof Date)) {
-            throw new Error("Expected a Date value");
-        }
-    }
 
     // Add a property with getter and setter to a class along with a validator function
     function defineProp(obj, propName, validator) {
