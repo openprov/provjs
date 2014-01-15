@@ -45,10 +45,11 @@
 
     // Namespace
     function Namespace(prefix, namespaceURI, predefined) {
+	var i, l;
         this.prefix = prefix;
         this.namespaceURI = namespaceURI;
         if (predefined !== undefined) {
-            for (var i = 0, l = predefined.length; i < l; i++) {
+            for (i = 0, l = predefined.length; i < l; i++) {
                 this.qn(predefined[i]);
             }
         }
@@ -83,13 +84,14 @@
 
     // PROV Record
     function Record() {
+	var i, l;
         // Parsing the optional attribute-value pairs if the last argument is a list
         this.attributes = [];
         var len = arguments.length;
         if (len > 1 && arguments[len - 1] instanceof Array) {
             // Requiring at least 3 arguments (record-specific first term, an array)
             var attrPairs = arguments[len - 1];
-            for (var i = 0, l = attrPairs.length; i < l; i += 2) {
+            for (i = 0, l = attrPairs.length; i < l; i += 2) {
                 requireQualifiedName(attrPairs[i]);
                 this.setAttr(attrPairs[i], attrPairs[i + 1]);
             }
@@ -106,9 +108,10 @@
             return this.identifier;
         },
         setAttr: function (k, v) {
+            var i;
             var existing = false;
             var values = this.getAttr(k);
-            for (var i = 0; i < values.length; i++) {
+            for (i = 0; i < values.length; i++) {
                 if (v.equals(values[i])) {
                     existing = true;
                     continue;
@@ -121,8 +124,9 @@
 
         // Arbitrary attributes
         getAttr: function (attr_name) {
+            var i;
             var results = [];
-            for (var i = 0; i < this.attributes.length; i++) {
+            for (i = 0; i < this.attributes.length; i++) {
                 if (attr_name.equals(this.attributes[i][0])) {
                     results.push(this.attributes[i][1]);
                 }
@@ -214,8 +218,9 @@
 
     // Relation
     function Relation() {
-        this.properties = {};
+        var i;
         var len = arguments.length;
+        this.properties = {};
         if (len > 0) {
             // Processing relation terms
             if (arguments[len - 1] instanceof Array) {
@@ -223,7 +228,7 @@
                 len--;
             }
             var terms = this.getPROVTerms();
-            for (var i = 0; i < len; i++) {
+            for (i = 0; i < len; i++) {
                 this[terms[i]] = arguments[i];
             }
         }
@@ -289,6 +294,7 @@
 
     // Define a PROV relation from the arguments
     function definePROVRelationClass(cls, provn_name, from, to, extras) {
+        var i;
         var proto = Object.create(Relation.prototype);
         proto.constructor = cls;
         proto.provn_name = provn_name;
@@ -300,7 +306,7 @@
         defineProp(proto, from, requireQualifiedName);
         defineProp(proto, to, requireQualifiedName);
         if (extras !== undefined) {
-            for (var i = 0; i < extras.length; i++) {
+            for (i = 0; i < extras.length; i++) {
                 var term = extras[i];
                 provTerms.push(term[0]);
                 defineProp(proto, term[0], term[1]);
@@ -773,9 +779,11 @@
             return ret;
         },
         getValidAttributeList: function(attrs) {
+            var pos, l;
+            var attributes;
             if (Array.isArray(attrs)) {
-                var attributes = [];
-                for (var pos = 0, l = attrs.length; pos < l; pos += 2) {
+                attributes = [];
+                for (pos = 0, l = attrs.length; pos < l; pos += 2) {
                     attributes.push(this.getValidQualifiedName(attrs[pos]));
                     attributes.push(this.getValidLiteral(attrs[pos + 1]));
                 }
@@ -991,10 +999,13 @@
             return this._accessProp(prop, identifier);
         };
     }
-    for (var i = 0; i < allQualifiedNameProperties.length; i++) {
-        var prop = allQualifiedNameProperties[i];
-        ProvJS.prototype[prop] = _createSetPropFunc(prop);
-    }
+    (function() {
+        var i, prop;
+        for (i = 0; i < allQualifiedNameProperties.length; i++) {
+            prop = allQualifiedNameProperties[i];
+            ProvJS.prototype[prop] = _createSetPropFunc(prop);
+        }
+    })()
 
 
     /* PROV-JSON Export
@@ -1016,12 +1027,13 @@
         return ret;
     };
     function _getProvJSON(value) {
+        var i, l;
         if (value && typeof value.getProvJSON === 'function') {
             return value.getProvJSON();
         }
         else if (typeof value === 'array') {
             var values = [];
-            for (var i = 0, l = value.length; i < l; i++) {
+            for (i = 0, l = value.length; i < l; i++) {
                 values.push(_getProvJSON(value[i]));
             }
             return values;
@@ -1054,7 +1066,9 @@
     Document.prototype.getProvJSON = function () {
         // TODO Normalise all namespaces used in the document
         var container = {},
-            i, l,
+            i, j, k, l, n, statement, id, provJSON, terms,
+            attr_name, attr_value,
+            provAttrName, provAttrValue,
             prefix, prefixBlock = {};
         if (this.namespaces) {
             for (prefix in this.namespaces) {
@@ -1065,16 +1079,16 @@
             container["prefix"] = prefixBlock;
         }
         for (i = 0, l = this.statements.length; i < l; i++) {
-            var statement = this.statements[i];
-            var id = _getUniqueID(statement);
-            var provJSON = {};
+            statement = this.statements[i];
+            id = _getUniqueID(statement);
+            provJSON = {};
 
             // Exporting PROV-specific properties
             if (statement instanceof Relation) {
                 var terms = statement.getPROVTerms();
-                for (var j = 0; j < terms.length; j++) {
-                    var provAttrName = terms[j],
-                        provAttrValue = statement[provAttrName];
+                for (j = 0; j < terms.length; j++) {
+                    provAttrName = terms[j];
+                    provAttrValue = statement[provAttrName];
                     if (provAttrValue !== undefined) {
                         provJSON["prov:" + provAttrName] =
                             (provAttrValue instanceof Date) ? provAttrValue.toISOString() : provAttrValue.toString();
@@ -1091,9 +1105,9 @@
                 }
             }
             // Exporting additional attribute-value pairs, if any
-            for (var k = 0, n = statement.attributes.length; k < n; k++) {
-                var attr_name = statement.attributes[k][0];
-                var attr_value = statement.attributes[k][1];
+            for (k = 0, n = statement.attributes.length; k < n; k++) {
+                attr_name = statement.attributes[k][0];
+                attr_value = statement.attributes[k][1];
                 provJSON[attr_name.toString()] = _getProvJSON(attr_value);
             }
             if (container[statement.provn_name] === undefined) {
