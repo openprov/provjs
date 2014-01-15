@@ -289,7 +289,7 @@
         // The first two terms are always required to be QualifiedName
         cls.from = from;
         cls.to = to;
-        cls.extras = extras;
+        cls.extras = (extras !== undefined) ? extras : [];
         defineProp(proto, from, requireQualifiedName);
         defineProp(proto, to, requireQualifiedName);
         if (extras !== undefined) {
@@ -1012,6 +1012,8 @@
     }
 
     Document.prototype.getProvJSON = function () {
+        // TODO Normalise all namespaces used in the document
+        // TODO Exporting the prefixes
         var container = {};
         for (var i = 0, l = this.statements.length; i < l; i++) {
             var statement = this.statements[i];
