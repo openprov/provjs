@@ -44,13 +44,20 @@
 
 
     // Namespace
-    function Namespace(prefix, namespaceURI) {
+    function Namespace(prefix, namespaceURI, predefined) {
         this.prefix = prefix;
         this.namespaceURI = namespaceURI;
+        if (predefined !== undefined) {
+            for (var i = 0, l = predefined.length; i < l; i++) {
+                this.qn(predefined[i]);
+            }
+        }
     }
     Namespace.prototype.qn = function (localPart) {
-        var ret = new QualifiedName(this.prefix, localPart, this.namespaceURI);
-        return ret;
+        if (!this.hasOwnProperty(localPart)) {
+            this[localPart] = new QualifiedName(this.prefix, localPart, this.namespaceURI);
+        }
+        return this[localPart];
     };
 
     // Literal and data types
@@ -581,22 +588,35 @@
     * Factory and Utility classes
     * */
 
-    var provNS = new Namespace("prov", "http://www.w3.org/ns/prov#");
-    // TODO Define commonly used QualifiedName here
-    provNS.Agent = provNS.qn("Agent");
-    provNS.Person = provNS.qn("Person");
-    provNS.Organization = provNS.qn("Organization");
-    provNS.SoftwareAgent = provNS.qn("SoftwareAgent");
-    provNS.Revision = provNS.qn("Revision");
-    provNS.Quotation = provNS.qn("Quotation");
+    var provNS =
+        new Namespace(
+            "prov", "http://www.w3.org/ns/prov#",
+            [
+                'Entity', 'Activity', 'Agent',
+                "Collection", "EmptyCollection", "Bundle",
+                "Person", "SoftwareAgent", "Organization", "Location",
+                "Influence", "EntityInfluence", "Usage", "Start", "End",
+                "Derivation", "PrimarySource", "Quotation", "Revision",
+                "ActivityInfluence", "Generation", "Communication", "Invalidation",
+                "AgentInfluence", "Attribution", "Association",
+                "Plan", "Delegation", "InstantaneousEvent", "Role"
+            ]
+        );
 
-    var xsdNS = new Namespace("xsd", "http://www.w3.org/2000/10/XMLSchema#");
-    xsdNS.QName = xsdNS.qn("QName");
+    var xsdNS =
+        new Namespace(
+            "xsd", "http://www.w3.org/2000/10/XMLSchema#",
+            ["QName", "dateTime"]
+        );
 
     // ProvJS is the main interface class of the library
     function ProvJS(scope, parent) {
         // The factory class
         this.scope = (scope !== undefined) ? scope : new Document();
+        if (this.scope instanceof Document) {
+            // TODO Remove this hack with proper namespace management
+            this.scope.namespaces = this.namespaces;
+        }
         this.parent = parent;
     }
 
@@ -651,6 +671,7 @@
 
         addNamespace: function (ns_or_prefix, uri) {
             var ns;
+            this._documentOnly();
             if (ns_or_prefix instanceof Namespace) {
                 ns = ns_or_prefix;
             } else {
@@ -673,6 +694,9 @@
                 var prefix = components[0];
                 if (prefix in namespaces) {
                     return namespaces[prefix].qn(components[1]);
+                }
+                if (this.parent) {
+                    // TODO: Try to resolve the prefix with the parent's namespaces
                 }
             }
 
@@ -772,7 +796,7 @@
             if (!(this.scope instanceof Document)) {
                 throw new Error("Unable to call this method here.");
             }
-            return new ProvJS();
+            return new ProvJS(new Document(), this);
         },
 
         bundle: function (identifier) {
@@ -788,6 +812,7 @@
         },
 
         entity: function (identifier, attrs) {
+            var attributes;
             if (this.scope instanceof Record) {
                 return this._accessProp('entity', identifier);
             }
@@ -795,7 +820,7 @@
                 this._documentOnly();
                 var eID = this.getValidQualifiedName(identifier);
                 if (attrs !== undefined) {
-                    var attributes = this.getValidAttributeList(attrs);
+                     attributes = this.getValidAttributeList(attrs);
                 }
                 var newEntity = new Entity(eID, attributes);
                 this.addStatement(newEntity);
@@ -804,6 +829,7 @@
             }
         },
         agent: function (identifier, attrs) {
+            var attributes;
             if (this.scope instanceof Record) {
                 return this._accessProp('agent', identifier);
             }
@@ -811,7 +837,7 @@
                 this._documentOnly();
                 var aID = this.getValidQualifiedName(identifier);
                 if (attrs !== undefined) {
-                    var attributes = this.getValidAttributeList(attrs);
+                    attributes = this.getValidAttributeList(attrs);
                 }
                 var newAgent = new Agent(aID, attributes);
                 this.addStatement(newAgent);
@@ -820,6 +846,7 @@
             }
         },
         activity: function (identifier, startTime, endTime, attrs) {
+            var attributes;
             if (this.scope instanceof Record) {
                 return this._accessProp('activity', identifier);
             }
@@ -834,7 +861,7 @@
                     endTime = this.getValidDate(endTime);
                 }
                 if (attrs !== undefined) {
-                    var attributes = this.getValidAttributeList(attrs);
+                    attributes = this.getValidAttributeList(attrs);
                 }
                 var newActivity = new Activity(aID, startTime, endTime, attributes);
                 this.addStatement(newActivity);
@@ -887,7 +914,7 @@
 
         _documentOnly: function () {
             if (!(this.scope instanceof Document)) {
-                throw new Error("Unable to call this method here.");
+                throw new Error("This method can only be called on a Document or Bundle.");
             }
         },
 
@@ -1026,9 +1053,18 @@
 
     Document.prototype.getProvJSON = function () {
         // TODO Normalise all namespaces used in the document
-        // TODO Exporting the prefixes
-        var container = {};
-        for (var i = 0, l = this.statements.length; i < l; i++) {
+        var container = {},
+            i, l,
+            prefix, prefixBlock = {};
+        if (this.namespaces) {
+            for (prefix in this.namespaces) {
+                if (this.namespaces.hasOwnProperty(prefix)) {
+                    prefixBlock[prefix] = this.namespaces[prefix].namespaceURI;
+                }
+            }
+            container["prefix"] = prefixBlock;
+        }
+        for (i = 0, l = this.statements.length; i < l; i++) {
             var statement = this.statements[i];
             var id = _getUniqueID(statement);
             var provJSON = {};
@@ -1040,12 +1076,8 @@
                     var provAttrName = terms[j],
                         provAttrValue = statement[provAttrName];
                     if (provAttrValue !== undefined) {
-                        if (provAttrValue instanceof Date) {
-                            provJSON["prov:" + provAttrName] = provAttrValue.toISOString();
-                        }
-                        else {
-                            provJSON["prov:" + provAttrName] = provAttrValue.toString();
-                        }
+                        provJSON["prov:" + provAttrName] =
+                            (provAttrValue instanceof Date) ? provAttrValue.toISOString() : provAttrValue.toString();
                     }
                 }
             }
