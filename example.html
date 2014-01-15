@@ -12,6 +12,7 @@
 		})();
 		</script>
 		<script type="text/javascript" src="prov.js"></script>
+        <script type="text/javascript" src="api.js"></script>
         <script type="text/javascript" src="primer.js"></script>
 		<script type="text/javascript">
 		function example() {
@@ -66,12 +67,37 @@
             console.log(provjson);
             console.log(JSON.stringify(provjson, null, "  "));
         }
+
+        var api = new $.provStoreApi({username: "username", key: "api_key"});
+        function loadFromProvStore(storeID) {
+            var doc;
+            api.getDocumentBody(storeID, "json",
+                    function(response) {
+                        console.log(response);
+                    },
+                    function(error) {
+                        console.log(error);
+                    }
+            );
+        }
+        function submitToProvStore(doc) {
+            var provjson = doc.getProvJSON();
+            api.submitDocument("primer-test", provjson, true,
+                    function(new_document_id) {
+                        loadFromProvStore((new_document_id));
+                    },
+                    function(error) {
+                        console.error(error);
+                    }
+            );
+        }
 		</script>
 	</head>
 	<body>
 		<p>Run
             <a href="#" onclick="example();">example</a>
             <a href="#" onclick="show_doc_json(primer());">prov-primer</a>
+            (<a href="#" onclick="submitToProvStore(primer());">submit to ProvStore</a>)
         </p>
 		<h1>Output</h1>
 		<pre id="result"></pre>
