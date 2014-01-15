@@ -627,20 +627,8 @@
     }
 
     ProvJS.prototype = {
-        // Exposing classes via the ProvJS class
-        URI: URI,
-        QualifiedName: QualifiedName,
-        Literal: Literal,
-        Record: Record,
-        Element: Element,
-        Entity: Entity,
-        Bundle: Bundle,
-        Relation: Relation,
-        Derivation: Derivation,
-        Attribution: Attribution,
-        // TODO: Add all the missing class here
-
         // All registered namespaces
+        // TODO Check if this is copied into separate instances or shared!!!
         namespaces: {
             "prov": provNS,
             "xsd": xsdNS
@@ -1045,6 +1033,32 @@
 
     // This is the default ProvJS object
     var rootProvJS = new ProvJS();
+    // Exposing the PROV-DM classes via the root ProvJS instance
+    rootProvJS.URI = URI;
+    rootProvJS.QualifiedName = QualifiedName;
+    rootProvJS.Literal = Literal;
+    rootProvJS.Record = Record;
+    rootProvJS.Element = Element;
+    rootProvJS.Entity = Entity;
+    rootProvJS.Activity = Activity;
+    rootProvJS.Agent = Agent;
+    rootProvJS.Relation = Relation;
+    rootProvJS.Generation = Generation;
+    rootProvJS.Usage = Usage;
+    rootProvJS.Communication = Communication;
+    rootProvJS.Start = Start;
+    rootProvJS.End = End;
+    rootProvJS.Invalidation = Invalidation;
+    rootProvJS.Derivation = Derivation;
+    rootProvJS.Attribution = Attribution;
+    rootProvJS.Association = Association;
+    rootProvJS.Delegation = Delegation;
+    rootProvJS.Influence = Influence;
+    rootProvJS.Specialization = Specialization;
+    rootProvJS.Alternate = Alternate;
+    rootProvJS.Membership = Membership
+    rootProvJS.Document = Document;
+    rootProvJS.Bundle = Bundle;
 
     // Registering the prov object with the environment
     if (typeof module === "object" && module && typeof module.exports === "object") {
