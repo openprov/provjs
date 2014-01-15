@@ -128,7 +128,7 @@
             for (i = 0; i < values.length; i++) {
                 if (v.equals(values[i])) {
                     existing = true;
-                    continue;
+                    break;
                 }
             }
             if (!existing) {
@@ -261,7 +261,7 @@
             output.push(term0);
         }
         var rel = provTerms.slice(1).map(function (x) {
-            return (that[x]) ? that[x] : "-";
+            return that[x] || "-";
         }).join(", ");
         output.push(rel);
 
@@ -292,7 +292,7 @@
 
     // Define a PROV relation from the arguments
     function definePROVRelationClass(cls, provn_name, from, to, extras) {
-        var i;
+        var i, term;
         var proto = Object.create(Relation.prototype);
         proto.constructor = cls;
         proto.provn_name = provn_name;
@@ -305,7 +305,7 @@
         defineProp(proto, to, requireQualifiedName);
         if (extras !== undefined) {
             for (i = 0; i < extras.length; i++) {
-                var term = extras[i];
+                term = extras[i];
                 provTerms.push(term[0]);
                 defineProp(proto, term[0], term[1]);
             }
@@ -699,9 +699,10 @@
                 if (prefix in namespaces) {
                     return namespaces[prefix].qn(components[1]);
                 }
+                /* TODO: Try to resolve the prefix with the parent's namespaces
                 if (this.parent) {
-                    // TODO: Try to resolve the prefix with the parent's namespaces
                 }
+                */
             }
 
             // TODO If a default namespace is registered, use it
@@ -990,7 +991,7 @@
             prop = allQualifiedNameProperties[i];
             ProvJS.prototype[prop] = _createSetPropFunc(prop);
         }
-    })()
+    })();
 
 
     /* PROV-JSON Export
@@ -1057,7 +1058,7 @@
                     prefixBlock[prefix] = this.namespaces[prefix].namespaceURI;
                 }
             }
-            container["prefix"] = prefixBlock;
+            container.prefix = prefixBlock;
         }
         for (i = 0, l = this.statements.length; i < l; i++) {
             statement = this.statements[i];
@@ -1066,7 +1067,7 @@
 
             // Exporting PROV-specific properties
             if (statement instanceof Relation) {
-                var terms = statement.getPROVTerms();
+                terms = statement.getPROVTerms();
                 for (j = 0; j < terms.length; j++) {
                     provAttrName = terms[j];
                     provAttrValue = statement[provAttrName];
@@ -1125,7 +1126,7 @@
     rootProvJS.Influence = Influence;
     rootProvJS.Specialization = Specialization;
     rootProvJS.Alternate = Alternate;
-    rootProvJS.Membership = Membership
+    rootProvJS.Membership = Membership;
     rootProvJS.Document = Document;
     rootProvJS.Bundle = Bundle;
 
