@@ -745,7 +745,7 @@
 
         document: function () {
             // Allow prov.document()
-            if (this.scope !== undefined) {
+            if (!(this.scope instanceof Document)) {
                 throw new Error("Unable to call this method here.");
             }
             return new ProvJS();
