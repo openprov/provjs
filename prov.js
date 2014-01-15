@@ -281,9 +281,7 @@
                 if (propName in this.properties) {
                     return this.properties[propName];
                 }
-                else {
-                    return undefined;
-                }
+                return undefined;
             },
             set: function (newValue) {
                 validator(newValue);
@@ -824,58 +822,52 @@
             if (this.scope instanceof Record) {
                 return this._accessProp('entity', identifier);
             }
-            else {
-                this._documentOnly();
-                var eID = this.getValidQualifiedName(identifier);
-                if (attrs !== undefined) {
-                     attributes = this.getValidAttributeList(attrs);
-                }
-                var newEntity = new Entity(eID, attributes);
-                this.addStatement(newEntity);
-                var newProvJS = new ProvJS(newEntity, this);
-                return newProvJS;
+            this._documentOnly();
+            var eID = this.getValidQualifiedName(identifier);
+            if (attrs !== undefined) {
+                 attributes = this.getValidAttributeList(attrs);
             }
+            var newEntity = new Entity(eID, attributes);
+            this.addStatement(newEntity);
+            var newProvJS = new ProvJS(newEntity, this);
+            return newProvJS;
         },
         agent: function (identifier, attrs) {
             var attributes;
             if (this.scope instanceof Record) {
                 return this._accessProp('agent', identifier);
             }
-            else {
-                this._documentOnly();
-                var aID = this.getValidQualifiedName(identifier);
-                if (attrs !== undefined) {
-                    attributes = this.getValidAttributeList(attrs);
-                }
-                var newAgent = new Agent(aID, attributes);
-                this.addStatement(newAgent);
-                var newProvJS = new ProvJS(newAgent, this);
-                return newProvJS;
+            this._documentOnly();
+            var aID = this.getValidQualifiedName(identifier);
+            if (attrs !== undefined) {
+                attributes = this.getValidAttributeList(attrs);
             }
+            var newAgent = new Agent(aID, attributes);
+            this.addStatement(newAgent);
+            var newProvJS = new ProvJS(newAgent, this);
+            return newProvJS;
         },
         activity: function (identifier, startTime, endTime, attrs) {
             var attributes;
             if (this.scope instanceof Record) {
                 return this._accessProp('activity', identifier);
             }
-            else {
-                this._documentOnly();
-                var aID = this.getValidQualifiedName(identifier);
-                // TODO: get the start time and end time from the list of arguments
-                if (startTime !== undefined) {
-                    startTime = this.getValidDate(startTime);
-                }
-                if (endTime !== undefined) {
-                    endTime = this.getValidDate(endTime);
-                }
-                if (attrs !== undefined) {
-                    attributes = this.getValidAttributeList(attrs);
-                }
-                var newActivity = new Activity(aID, startTime, endTime, attributes);
-                this.addStatement(newActivity);
-                var newProvJS = new ProvJS(newActivity, this);
-                return newProvJS;
+            this._documentOnly();
+            var aID = this.getValidQualifiedName(identifier);
+            // TODO: get the start time and end time from the list of arguments
+            if (startTime !== undefined) {
+                startTime = this.getValidDate(startTime);
             }
+            if (endTime !== undefined) {
+                endTime = this.getValidDate(endTime);
+            }
+            if (attrs !== undefined) {
+                attributes = this.getValidAttributeList(attrs);
+            }
+            var newActivity = new Activity(aID, startTime, endTime, attributes);
+            this.addStatement(newActivity);
+            var newProvJS = new ProvJS(newActivity, this);
+            return newProvJS;
         },
 
         wasGeneratedBy:     defineRelationFunction(Generation),
@@ -895,23 +887,19 @@
 
         // Setting properties
         _accessProp: function (property, newValue) {
-            if (this.scope instanceof Record) {
-                // Setting the entity attribute
-                this._propertyGuard(property);
-                // If the new value is not provided
-                if (newValue === undefined) {
-                    // Returning the value of the property
-                    return this.scope[property];
-                }
-                else {
-                    // Setting the property
-                    this.scope[property] = this.getValidQualifiedName(newValue);
-                    return this;
-                }
-            }
-            else {
+            if (!(this.scope instanceof Record)) {
                 throw new Error("Unable to access this property here.");
             }
+            // Setting the entity attribute
+            this._propertyGuard(property);
+            // If the new value is not provided
+            if (newValue === undefined) {
+                // Returning the value of the property
+                return this.scope[property];
+            }
+            // Setting the property
+            this.scope[property] = this.getValidQualifiedName(newValue);
+            return this;
         },
 
         _propertyGuard: function (property) {
@@ -947,10 +935,9 @@
             }
             if (arguments.length === 0) {
                 return context.id();
-            } else {
-                context.id(this.getValidQualifiedName(arguments[0]));
-                return this;
             }
+            context.id(this.getValidQualifiedName(arguments[0]));
+            return this;
         },
 
         // TODO prov:time, prov:startTime, prov:endTime
@@ -964,9 +951,7 @@
             if (this.scope instanceof Record) {
                 return 'ProvJS(' + this.scope + ')';
             }
-            else {
-                return 'ProvJS(' + this.scope.statements.join(", ") + ')';
-            }
+            return 'ProvJS(' + this.scope.statements.join(", ") + ')';
         }
 
     };
@@ -1031,21 +1016,17 @@
         if (value && typeof value.getProvJSON === 'function') {
             return value.getProvJSON();
         }
-        else if (typeof value === 'array') {
+        if (typeof value === 'array') {
             var values = [];
             for (i = 0, l = value.length; i < l; i++) {
                 values.push(_getProvJSON(value[i]));
             }
             return values;
         }
-        else {
-            if (value instanceof Date) {
-                return {'$': value.toISOString(), 'type': 'xsd:dateTime'};
-            }
-            else {
-                return value;
-            }
+        if (value instanceof Date) {
+            return {'$': value.toISOString(), 'type': 'xsd:dateTime'};
         }
+        return value;
     }
 
     var uniqueIDCount = 0;
