@@ -735,6 +735,17 @@
             }
             return ret;
         },
+        getValidAttributeList: function(attrs) {
+            if (Array.isArray(attrs)) {
+                var attributes = [];
+                for (var pos = 0, l = attrs.length; pos < l; pos += 2) {
+                    attributes.push(this.getValidQualifiedName(attrs[pos]));
+                    attributes.push(this.getValidLiteral(attrs[pos + 1]));
+                }
+                return attributes;
+            }
+            throw new Error("The provided attribute list is not an array.");
+        },
 
         // PROV statements
         addStatement: function (statement) {
@@ -763,39 +774,45 @@
             return newProvJS;
         },
 
-        entity: function (identifier) {
+        entity: function (identifier, attrs) {
             if (this.scope instanceof Record) {
                 return this._accessProp('entity', identifier);
             }
             else {
                 this._documentOnly();
                 var eID = this.getValidQualifiedName(identifier);
-                var newEntity = new Entity(eID);
+                if (attrs !== undefined) {
+                    var attributes = this.getValidAttributeList(attrs);
+                }
+                var newEntity = new Entity(eID, attributes);
                 this.addStatement(newEntity);
                 var newProvJS = new ProvJS(newEntity, this);
                 return newProvJS;
             }
         },
-        agent: function (identifier) {
+        agent: function (identifier, attrs) {
             if (this.scope instanceof Record) {
                 return this._accessProp('agent', identifier);
             }
             else {
                 this._documentOnly();
-                var eID = this.getValidQualifiedName(identifier);
-                var newAgent = new Agent(eID);
+                var aID = this.getValidQualifiedName(identifier);
+                if (attrs !== undefined) {
+                    var attributes = this.getValidAttributeList(attrs);
+                }
+                var newAgent = new Agent(aID, attributes);
                 this.addStatement(newAgent);
                 var newProvJS = new ProvJS(newAgent, this);
                 return newProvJS;
             }
         },
-        activity: function (identifier, startTime, endTime) {
+        activity: function (identifier, startTime, endTime, attrs) {
             if (this.scope instanceof Record) {
                 return this._accessProp('activity', identifier);
             }
             else {
                 this._documentOnly();
-                var eID = this.getValidQualifiedName(identifier);
+                var aID = this.getValidQualifiedName(identifier);
                 // TODO: get the start time and end time from the list of arguments
                 if (startTime !== undefined) {
                     startTime = this.getValidDate(startTime);
@@ -803,7 +820,10 @@
                 if (endTime !== undefined) {
                     endTime = this.getValidDate(endTime);
                 }
-                var newActivity = new Activity(eID, startTime, endTime);
+                if (attrs !== undefined) {
+                    var attributes = this.getValidAttributeList(attrs);
+                }
+                var newActivity = new Activity(aID, startTime, endTime, attributes);
                 this.addStatement(newActivity);
                 var newProvJS = new ProvJS(newActivity, this);
                 return newProvJS;
