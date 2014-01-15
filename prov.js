@@ -611,7 +611,7 @@
 
     var xsdNS =
         new Namespace(
-            "xsd", "http://www.w3.org/2000/10/XMLSchema#",
+            "xsd", "http://www.w3.org/2001/XMLSchema",
             ["QName", "dateTime"]
         );
 
