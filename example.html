@@ -57,7 +57,7 @@
 
             console.log("PROV-JSON export of the root document:")
             var doc = prov.scope;
-            var provjson = doc.buildPROVJSON();
+            var provjson = doc.getProvJSON();
             console.log(JSON.stringify(provjson, null, "  "));
         }
 		</script>

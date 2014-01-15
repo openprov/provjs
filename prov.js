@@ -99,10 +99,9 @@
             return this.identifier;
         },
         setAttr: function (k, v) {
-            var i;
             var existing = false;
             var values = this.getAttr(k);
-            for (i = 0; i < values.length; i++) {
+            for (var i = 0; i < values.length; i++) {
                 if (v.equals(values[i])) {
                     existing = true;
                     continue;
@@ -560,36 +559,11 @@
     // TODO: Documentation for Document here
     function Document() {
         this.statements = [];
-        // this.statements = statements.slice(); // Cloning the list of statements
         // TODO Collect all namespaces used in various QualifiedName to define in the prefix block
         // This can also be done in when a document is exported to PROV-N or PROV-JSON
     }
     Document.prototype = {
         constructor: Document,
-        buildPROVJSON: function () {
-            // TODO implement following _encode_JSON_container()
-            // (See https://github.com/trungdong/prov/blob/master/prov/model/__init__.py#L1375)
-            var container = {};
-            for (var i = 0, l = this.statements.length; i < l; i++) {
-                var statement = this.statements[i];
-                var id = getUniqueID(statement);
-                var stJSON = {};
-                if (statement instanceof Relation) {
-                    var terms = statement.getPROVTerms();
-                    for (var j = 0; j < terms.length; j++) {
-                        if (statement[terms[j]] !== undefined) {
-                            stJSON["prov:" + terms[j]] = statement[terms[j]].toString();
-                        }
-                    }
-                }
-                // TODO Export attribute-value pairs (and startTime, endTime for activities)
-                if (container[statement.provn_name] === undefined) {
-                    container[statement.provn_name] = {};
-                }
-                container[statement.provn_name][id] = stJSON;
-            }
-            return container;
-        },
         addStatement: function (statement) {
             this.statements.push(statement);
         }
@@ -606,22 +580,6 @@
     /*
     * Factory and Utility classes
     * */
-
-    var uniqueIDCount = 0;
-
-    function getUniqueID(obj) {
-        // Generating unique identifiers for PROV-JSON export
-        var ret;
-        if (obj.getId !== undefined && (ret = obj.getId()) !== undefined) {
-            // Return the existing identifier
-            return ret.toString();
-        }
-        if (obj.__provjson_id === undefined) {
-            obj.__provjson_id = "_:id" + (++uniqueIDCount);
-
-        }
-        return obj.__provjson_id;
-    }
 
     var provNS = new Namespace("prov", "http://www.w3.org/ns/prov#");
     var xsdNS = new Namespace("xsd", "http://www.w3.org/2000/10/XMLSchema#");
@@ -744,8 +702,6 @@
                 } else if (value instanceof Date) {
                     value = value.toISOString();
                     datatype = xsdNS.qname("dateTime");
-                } else if (value instanceof QualifiedName) {
-                    datatype = xsdNS.QName;
                 }
             } else {
                 if (datatype !== undefined) {
@@ -763,6 +719,10 @@
         },
         getValidLiteral: function (literal) {
             if (literal instanceof Literal) {
+                return literal;
+            }
+            if (literal instanceof QualifiedName) {
+                // A QualifiedName is considered a literal
                 return literal;
             }
             var ret;
@@ -913,7 +873,7 @@
         attr: function (attr_name, attr_value) {
             var context = this.scope;
             if (context === undefined) {
-                return(undefined);
+                return undefined;
             }
             if (attr_value === undefined) {
                 // Overloading this with getter behaviour
@@ -987,6 +947,101 @@
         var prop = allQualifiedNameProperties[i];
         ProvJS.prototype[prop] = _createSetPropFunc(prop);
     }
+
+
+    /* PROV-JSON Export
+     */
+    URI.prototype.getProvJSON = function () {
+        return {'$': this.getURI(), 'type': 'xsd:anyURI'};
+    };
+    QualifiedName.prototype.getProvJSON = function () {
+        return {'$': this.toString(), 'type': 'prov:QualifiedName'};
+    };
+    Literal.prototype.getProvJSON = function () {
+        var ret = {'$': this.value};
+        if (this.datatype !== undefined) {
+            ret.type = this.datatype.toString();
+        }
+        if (this.langtag !== undefined) {
+            ret.lang = this.langtag;
+        }
+        return ret;
+    };
+    function _getProvJSON(value) {
+        if (value && typeof value.getProvJSON === 'function') {
+            return value.getProvJSON();
+        }
+        else if (typeof value === 'array') {
+            var values = [];
+            for (var i = 0, l = value.length; i < l; i++) {
+                values.push(_getProvJSON(value[i]));
+            }
+            return values;
+        }
+        else {
+            if (value instanceof Date) {
+                return {'$': value.toISOString(), 'type': 'xsd:dateTime'};
+            }
+            else {
+                return value;
+            }
+        }
+    }
+
+    var uniqueIDCount = 0;
+    function _getUniqueID(obj) {
+        // Generating unique identifiers for PROV-JSON export
+        var ret;
+        if (obj.getId !== undefined && (ret = obj.getId()) !== undefined) {
+            // Return the existing identifier
+            return ret.toString();
+        }
+        if (obj.__provjson_id === undefined) {
+            obj.__provjson_id = "_:id" + (++uniqueIDCount);
+
+        }
+        return obj.__provjson_id;
+    }
+
+    Document.prototype.getProvJSON = function () {
+        var container = {};
+        for (var i = 0, l = this.statements.length; i < l; i++) {
+            var statement = this.statements[i];
+            var id = _getUniqueID(statement);
+            var provJSON = {};
+
+            // Exporting PROV-specific properties
+            if (statement instanceof Relation) {
+                var terms = statement.getPROVTerms();
+                for (var j = 0; j < terms.length; j++) {
+                    if (statement[terms[j]] !== undefined) {
+                        provJSON["prov:" + terms[j]] = statement[terms[j]].toString();
+                    }
+                }
+            }
+            else if (statement instanceof Activity) {
+                // Exporting startTime and endTime, if any
+                if (statement.startTime) {
+                    provJSON["prov:startTime"] = statement.startTime.toISOString();
+                }
+                if (statement.endTime) {
+                    provJSON["prov:endTime"] = statement.endTime.toISOString();
+                }
+            }
+            // Exporting additional attribute-value pairs, if any
+            for (var k = 0, n = statement.attributes.length; k < n; k++) {
+                var attr_name = statement.attributes[k][0];
+                var attr_value = statement.attributes[k][1];
+                provJSON[attr_name.toString()] = _getProvJSON(attr_value);
+            }
+            if (container[statement.provn_name] === undefined) {
+                container[statement.provn_name] = {};
+            }
+            container[statement.provn_name][id] = provJSON;
+        }
+        // TODO Exporting bundles
+        return container;
+    };
 
     // This is the default ProvJS object
     var rootProvJS = new ProvJS();
