@@ -11,7 +11,7 @@ var prov = require("./prov");
 var ex = prov.addNamespace("ex", "http://www.example.org/");
 
 var e1 = prov.entity("ex:e1");
-e1.attr("ex:foo", ex.qname("bar"))
+e1.attr("ex:foo", ex.qn("bar"))
   .attr("ex:baz", ["abc", "xsd:string"])
   .attr("ex:bah", ["1", "xsd:integer"])
   .attr("ex:bam", ["bam", undefined, "en"])
@@ -30,13 +30,13 @@ console.log(e2);
 
 var der1 = prov.wasDerivedFrom("ex:e2", "ex:e1")
 	.attr("prov:type", ["prov:Revision", "xsd:QName"])
-	.id(ex.qname('d1'));
+	.id(ex.qn('d1'));
 console.log(der1.getContext());
 console.log("" + der1);
 
 console.log(der1.attr("prov:type"));
 
-var der2 = prov.wasDerivedFrom("ex:e2", "ex:e1", ["prov:type", prov.ns.qname("Revision")]);
+var der2 = prov.wasDerivedFrom("ex:e2", "ex:e1", ["prov:type", prov.ns.qn("Revision")]);
 console.log(der2);
 console.log("" + der2);
 

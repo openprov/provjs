@@ -12,15 +12,16 @@
 		})();
 		</script>
 		<script type="text/javascript" src="prov.js"></script>
+        <script type="text/javascript" src="primer.js"></script>
 		<script type="text/javascript">
 		function example() {
 			var ex = prov.addNamespace("ex", "http://www.example.org/");
 			var e1 = prov.entity("ex:e1");
-			e1.attr("ex:foo", ex.qname("bar"))
+			e1.attr("ex:foo", ex.qn("bar"))
 			  .attr("ex:baz", ["abc", "xsd:string"])
 			  .attr("ex:bah", ["1", "xsd:integer"])
 			  .attr("ex:bam", ["bam", undefined, "en"])
-			  .attr(ex.qname("bam"), prov.literal("bam", undefined, "en"));
+			  .attr(ex.qn("bam"), prov.literal("bam", undefined, "en"));
 			console.log(e1);
 
 			var e2 = prov.entity("ex:e2")
@@ -34,15 +35,15 @@
 			
 			var der1 = prov.wasDerivedFrom("ex:e2", "ex:e1")
 				.attr("prov:type", ["prov:Revision", "xsd:QName"])
-				.id(ex.qname('d1'));
+				.id(ex.qn('d1'));
 			var der1 = prov.wasDerivedFrom("ex:e2", "ex:e1");
-			der1.attr(prov.ns.qname("type"), prov.ns.qname("Revision"));
-			der1.id(ex.qname('d1'));
-			//der1.activity = ex.qname('a1');
-			der1.attr(prov.ns.qname("type"), prov.ns.qname("Revision"));
+			der1.attr(prov.ns.qn("type"), prov.ns.qn("Revision"));
+			der1.id(ex.qn('d1'));
+			//der1.activity = ex.qn('a1');
+			der1.attr(prov.ns.qn("type"), prov.ns.qn("Revision"));
 			console.log(der1);
 			
-			var der2 = prov.wasDerivedFrom("ex:e2", "ex:e1", ["prov:type", prov.ns.qname("Revision")]);
+			var der2 = prov.wasDerivedFrom("ex:e2", "ex:e1", ["prov:type", prov.ns.qn("Revision")]);
 			console.log(der2);
 
 			var bundle = prov.bundle("ex:bundle");
@@ -55,15 +56,23 @@
 			// console.log(doc);
 			prov.wasDerivedFrom("ex:e2", "ex:e1").generatedEntity("ex:e4");
 
-            console.log("PROV-JSON export of the root document:")
-            var doc = prov.scope;
+            show_doc_json(prov.scope);
+        }
+
+        function show_doc_json(doc) {
+            console.log(doc);
+            console.log("PROV-JSON export of the above document:")
             var provjson = doc.getProvJSON();
+            console.log(provjson);
             console.log(JSON.stringify(provjson, null, "  "));
         }
 		</script>
 	</head>
 	<body>
-		<p><a href="#" onclick="example();">Run example</a></p>
+		<p>Run
+            <a href="#" onclick="example();">example</a>
+            <a href="#" onclick="show_doc_json(primer());">prov-primer</a>
+        </p>
 		<h1>Output</h1>
 		<pre id="result"></pre>
 	</body>

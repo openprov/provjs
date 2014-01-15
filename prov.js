@@ -48,7 +48,7 @@
         this.prefix = prefix;
         this.namespaceURI = namespaceURI;
     }
-    Namespace.prototype.qname = function (localPart) {
+    Namespace.prototype.qn = function (localPart) {
         var ret = new QualifiedName(this.prefix, localPart, this.namespaceURI);
         return ret;
     };
@@ -582,8 +582,16 @@
     * */
 
     var provNS = new Namespace("prov", "http://www.w3.org/ns/prov#");
+    // TODO Define commonly used QualifiedName here
+    provNS.Agent = provNS.qn("Agent");
+    provNS.Person = provNS.qn("Person");
+    provNS.Organization = provNS.qn("Organization");
+    provNS.SoftwareAgent = provNS.qn("SoftwareAgent");
+    provNS.Revision = provNS.qn("Revision");
+    provNS.Quotation = provNS.qn("Quotation");
+
     var xsdNS = new Namespace("xsd", "http://www.w3.org/2000/10/XMLSchema#");
-    xsdNS.QName = xsdNS.qname("QName");
+    xsdNS.QName = xsdNS.qn("QName");
 
     // ProvJS is the main interface class of the library
     function ProvJS(scope, parent) {
@@ -664,7 +672,7 @@
             if (components.length === 2) {
                 var prefix = components[0];
                 if (prefix in namespaces) {
-                    return namespaces[prefix].qname(components[1]);
+                    return namespaces[prefix].qn(components[1]);
                 }
             }
 
@@ -679,7 +687,7 @@
                 // Missing both datatype and langtag
                 if (value instanceof Date) {
                     value = value.toISOString();
-                    datatype = xsdNS.qname("dateTime");
+                    datatype = xsdNS.qn("dateTime");
                 }
                 else {
                     switch (typeof value) {
@@ -688,9 +696,9 @@
                             return value; // Supported native types
                         case "number":
                             if (Math.floor(value) === value) {
-                                datatype = xsdNS.qname("int");
+                                datatype = xsdNS.qn("int");
                             } else {
-                                datatype = xsdNS.qname("float");
+                                datatype = xsdNS.qn("float");
                             }
                             break;
                     }
@@ -1029,8 +1037,15 @@
             if (statement instanceof Relation) {
                 var terms = statement.getPROVTerms();
                 for (var j = 0; j < terms.length; j++) {
-                    if (statement[terms[j]] !== undefined) {
-                        provJSON["prov:" + terms[j]] = statement[terms[j]].toString();
+                    var provAttrName = terms[j],
+                        provAttrValue = statement[provAttrName];
+                    if (provAttrValue !== undefined) {
+                        if (provAttrValue instanceof Date) {
+                            provJSON["prov:" + provAttrName] = provAttrValue.toISOString();
+                        }
+                        else {
+                            provJSON["prov:" + provAttrName] = provAttrValue.toString();
+                        }
                     }
                 }
             }
