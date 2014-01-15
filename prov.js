@@ -45,7 +45,7 @@
 
     // Namespace
     function Namespace(prefix, namespaceURI, predefined) {
-	var i, l;
+        var i, l;
         this.prefix = prefix;
         this.namespaceURI = namespaceURI;
         if (predefined !== undefined) {
@@ -84,7 +84,7 @@
 
     // PROV Record
     function Record() {
-	var i, l;
+        var i, l;
         // Parsing the optional attribute-value pairs if the last argument is a list
         this.attributes = [];
         var len = arguments.length;
