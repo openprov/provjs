@@ -677,19 +677,23 @@
             // Determine the data type for common types
             if ((datatype === undefined) && (langtag === undefined)) {
                 // Missing both datatype and langtag
-                if (typeof value === "string") {
-                    datatype = xsdNS.qname("string");
-                } else if (typeof value === 'number') {
-                    if (Math.floor(value) === value) {
-                        datatype = xsdNS.qname("int");
-                    } else {
-                        datatype = xsdNS.qname("float");
-                    }
-                } else if (typeof value === 'boolean') {
-                    datatype = xsdNS.qname("boolean");
-                } else if (value instanceof Date) {
+                if (value instanceof Date) {
                     value = value.toISOString();
                     datatype = xsdNS.qname("dateTime");
+                }
+                else {
+                    switch (typeof value) {
+                        case "string":
+                        case "boolean":
+                            return value; // Supported native types
+                        case "number":
+                            if (Math.floor(value) === value) {
+                                datatype = xsdNS.qname("int");
+                            } else {
+                                datatype = xsdNS.qname("float");
+                            }
+                            break;
+                    }
                 }
             } else {
                 if (datatype !== undefined) {
@@ -699,6 +703,7 @@
                         // Try to ensure a QualifiedName value
                         value = this.getValidQualifiedName(value);
                     }
+
                 }
                 // TODO Handle with langtag and undefined datatype
             }
