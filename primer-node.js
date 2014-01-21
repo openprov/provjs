@@ -5,7 +5,10 @@
  * Licence: To be determined
  */
 
-var prov = require("./prov");
+/* jslint node: true */
+"use strict";
+
+var prov = require('./prov');
 
 function primer() {
     "use strict";
@@ -88,4 +91,16 @@ function primer() {
 
 var doc = primer();
 
-console.log(doc.getProvJSON());
+var ProvStore = require('./provstore');
+var store = new ProvStore(
+    'https://provenance.ecs.soton.ac.uk/store/api/v0/',
+    'username',
+    'apikey'
+);
+
+var provjson = doc.getProvJSON();
+
+store.submitDocument('primer-node.js', provjson);
+
+
+
