@@ -1148,4 +1148,4 @@
         window.prov = rootProvJS;
     }
 
-})(window);
+})(typeof window !== 'undefined' ? window : this);
