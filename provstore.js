@@ -41,21 +41,25 @@
             };
             var req = this.http.request(options, function(response) {
                 var dataStr = '';
-                console.log('STATUS: ' + response.statusCode);
-                console.log('HEADERS: ' + JSON.stringify(response.headers));
                 response.setEncoding('utf8');
                 response.on('data', function (chunk) {
-                    console.log('BODY: ' + chunk);
                     dataStr += chunk;
                 });
                 response.on('end', function (){
-                    var result = JSON.parse(dataStr);
+                    var result;
+                    try {
+                        // Try to parse the result as JSON
+                        result = JSON.parse(dataStr);
+                    }
+                    catch (err) {
+                        // Return the result as-is
+                        result = dataStr;
+                    }
                     callback(result);
                 });
             });
 
             req.on('error', function(e) {
-                console.log('problem with request: ' + e.message);
                 error(e);
             });
 
@@ -75,12 +79,33 @@
             this.request('documents/', data, 'POST', function (response) {
                 console.log(response.id);
             }, err);
+        },
+        listDocuments: function (offset, limit, callback, err) {
+            var data = {};
+            if (offset) {
+                data.offset = offset;
+            }
+            if (limit) {
+                data.limit = limit;
+            }
+            this.request('documents/', data, 'GET', callback, err);
+        },
+        getDocument: function (provstore_id, callback, err) {
+            this.request('documents/' + provstore_id + '/', null, 'GET', callback, err);
+        },
+        getDocumentContent: function (provstore_id, format, callback, err) {
+            this.request('documents/' + provstore_id + '.' + format, null, 'GET', callback, err);
+        },
+        deleteDocument: function (provstore_id, callback, err) {
+            this.request('documents/' + provstore_id + '/', null, 'DELETE', callback, err);
+        },
+        addBundle: function (id, identifier, prov_bundle, callback, err) {
+            var data = {
+                content: prov_bundle,
+                rec_id: identifier
+            };
+            this.request('documents/' + id + '/bundles/', data, 'POST', callback, err);
         }
-        // TODO: listDocuments
-        // TODO: getDocument
-        // TODO: getDocumentContent
-        // TODO: deleteDocument
-        // TODO: addBundle
     };
 
     // export as Common JS module...
