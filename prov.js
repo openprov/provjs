@@ -32,7 +32,11 @@
     QualifiedName.prototype = Object.create(URI.prototype);
     QualifiedName.prototype.constructor = QualifiedName;
     QualifiedName.prototype.toString = function () {
-        var ret = this.prefix + ":" + this.localPart;
+        if (this.prefix == "default"){
+            var ret = this.localPart;
+        } else {
+            var ret = this.prefix + ":" + this.localPart;
+        }
         return ret;
     };
     QualifiedName.prototype.equals = function (other) {
@@ -685,6 +689,13 @@
             namespaces[ns.prefix] = ns;
             return ns;
         },
+        setDefaultNamespace: function (uri) {
+            this._documentOnly();
+            var ns = new Namespace("default", uri);
+            var namespaces = (this.scope instanceof Record) ? this.parent.namespaces : this.namespaces;
+            namespaces[ns.prefix] = ns;
+            return ns;
+        },
         getValidQualifiedName: function (identifier) {
             if (identifier instanceof QualifiedName) {
                 return identifier;
@@ -703,6 +714,11 @@
                 if (this.parent) {
                 }
                 */
+            } else if (components.length < 2) {
+                var prefix = "default";
+                if (prefix in namespaces) {
+                    return namespaces[prefix].qn(identifier);
+                }
             }
 
             // TODO If a default namespace is registered, use it

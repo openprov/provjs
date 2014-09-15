@@ -16,6 +16,7 @@
         <script type="text/javascript" src="primer.js"></script>
 		<script type="text/javascript">
 		function example() {
+			var def = prov.setDefaultNamespace("http://default.example.com/");
 			var ex = prov.addNamespace("ex", "http://www.example.org/");
 			var e1 = prov.entity("ex:e1");
 			e1.attr("ex:foo", ex.qn("bar"))
@@ -24,6 +25,8 @@
 			  .attr("ex:bam", ["bam", undefined, "en"])
 			  .attr(ex.qn("bam"), prov.literal("bam", undefined, "en"));
 			console.log(e1);
+
+			var d_e1 = prov.entity("d_e1");
 
 			var e2 = prov.entity("ex:e2")
 				.attr("ex:dat", new Date(Date.now()))
