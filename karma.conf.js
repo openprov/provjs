@@ -32,14 +32,15 @@ module.exports = function(config) {
     reporters: ['progress','spec','html','coverage'],
 
     specReporter: {maxLogLines: 5},
-
-//    plugins: ["karma-spec-reporter"],
+    // https://github.com/mlex/karma-spec-reporter
+    // Print executed test specifications to command line.
 
     coverageReporter: {
-      // See http://karma-runner.github.io/0.8/config/coverage.html
-      // If wanting a plain-text report at the console
+      // https://github.com/karma-runner/karma-coverage
+      // Generate code coverage.
+      // If wanting a plain-text report at the console:
       type: 'text',
-      // If wanting HTML reports in files
+      // If wanting HTML reports in files:
       // type: 'html',
       // dir: './coverage/'
     },
