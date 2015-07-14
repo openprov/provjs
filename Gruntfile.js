@@ -1,3 +1,5 @@
+// Grunt JavaScript Task Runner configuration file
+// http://gruntjs.com/
 module.exports = function(grunt) {
     'use strict';
     // Project configuration.

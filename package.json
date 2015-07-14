@@ -1,3 +1,5 @@
+# NodeJS package file
+# https://nodejs.org/
 {
     "name": "ProvJS",
     "version": "0.0.1",
