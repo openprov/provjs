@@ -10,11 +10,11 @@ before_script:
   - grunt -V
   - cat package.json
   - npm install karma-cli -g
-  - npm install karma --save-dev
-  - npm install karma-jasmine 
-  - npm install karma-coverage --save-dev
-  - npm install karma-jasmine-html-reporter --save-dev
-  - npm install karma-firefox-launcher --save-dev
+#  - npm install karma --save-dev
+#  - npm install karma-jasmine 
+#  - npm install karma-coverage --save-dev
+#  - npm install karma-jasmine-html-reporter --save-dev
+#  - npm install karma-firefox-launcher --save-dev
   - karma --version
   - cat package.json
 # Set up virtual screen
