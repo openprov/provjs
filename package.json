@@ -1,6 +1,7 @@
 {
     "name": "ProvJS",
     "version": "0.0.1",
+    "description": "Javascript implementation of the W3C PROV standards",
     "devDependencies": {
         "grunt": "~0.4.5",
         "grunt-contrib-jasmine": "~0.8.2"
