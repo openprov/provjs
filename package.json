@@ -8,6 +8,7 @@
     },
     "scripts": {
         "testJasmine": "grunt jasmine",
-        "test": "./node_modules/.bin/karma start --single-run --browsers PhantomJS"
+        "testKarma": "./node_modules/.bin/karma start --single-run --browsers PhantomJS",
+        "test": "./node_modules/.bin/karma start --single-run"
     }
 }

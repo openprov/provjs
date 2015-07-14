@@ -16,6 +16,7 @@ before_script:
   - npm install karma-jasmine-html-reporter --save-dev
   - npm install karma-firefox-launcher --save-dev
   - karma --version
+  - cat package.json
 # Set up virtual screen
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
