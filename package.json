@@ -13,8 +13,8 @@
 	"karma-spec-reporter": "~0.0.20"
     },
     "scripts": {
-        "testJasmine": "grunt jasmine",
-        "testKarma": "./node_modules/.bin/karma start --single-run --browsers PhantomJS",
+        "testGrunt": "grunt jasmine",
+        "testKarma": "./node_modules/.bin/karma start --single-run",
         "test": "./node_modules/.bin/karma start --single-run"
     }
 }
