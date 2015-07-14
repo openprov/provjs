@@ -18,5 +18,5 @@ before_script:
 script:
 # If "script" is omitted, TravisCI will run "npm test".
 # Here we explicitly run tests via both Grunt and Karma.
-  - npm testGrunt
-  - npm testKarma
+  - npm run testGrunt
+  - npm run testKarma
