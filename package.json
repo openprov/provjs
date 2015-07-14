@@ -1,0 +1,20 @@
+{
+    "name": "ProvJS",
+    "version": "0.0.1",
+    "description": "Javascript implementation of the W3C PROV standards",
+    "devDependencies": {
+        "grunt": "~0.4.5",
+        "grunt-contrib-jasmine": "~0.8.2",
+	"karma": "~0.12.31",
+	"karma-coverage": "~0.3.1",
+	"karma-firefox-launcher": "~0.1.6",
+	"karma-jasmine": "~0.3.6",
+	"karma-jasmine-html-reporter": "~0.1.8",
+	"karma-spec-reporter": "~0.0.20"
+    },
+    "scripts": {
+        "testGrunt": "grunt jasmine",
+        "testKarma": "./node_modules/.bin/karma start --single-run",
+        "test": "./node_modules/.bin/karma start --single-run"
+    }
+}
