@@ -29,11 +29,11 @@ module.exports = function(config) {
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['progress','specs','html','coverage'],
+    reporters: ['progress','spec','html','coverage'],
 
     specReporter: {maxLogLines: 5},
 
-    plugins: ["karma-spec-reporter"],
+//    plugins: ["karma-spec-reporter"],
 
     coverageReporter: {
       // See http://karma-runner.github.io/0.8/config/coverage.html
