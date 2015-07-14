@@ -23,7 +23,7 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-    'prov.js': ['coverage']
+      'prov.js': ['coverage']
     },
     
     // test results reporter to use
@@ -32,6 +32,8 @@ module.exports = function(config) {
     reporters: ['progress','specs','html','coverage'],
 
     specReporter: {maxLogLines: 5},
+
+    plugins: ["karma-spec-reporter"],
 
     coverageReporter: {
       // See http://karma-runner.github.io/0.8/config/coverage.html

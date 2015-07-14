@@ -10,7 +10,6 @@ before_script:
   - grunt -V
   - npm install karma-cli -g
   - karma --version
-  - npm install karma-spec-reporter --save-dev
   - cat package.json
 # Set up virtual screen
   - export DISPLAY=:99.0
