@@ -613,7 +613,7 @@
 
     var xsdNS =
         new Namespace(
-            "xsd", "http://www.w3.org/2001/XMLSchema",
+            "xsd", "http://www.w3.org/2000/10/XMLSchema#",
             ["QName", "dateTime"]
         );
 
@@ -1016,7 +1016,7 @@
         return {'$': this.getURI(), 'type': 'xsd:anyURI'};
     };
     QualifiedName.prototype.getProvJSON = function () {
-        return {'$': this.toString(), 'type': 'prov:QualifiedName'};
+        return {'$': this.toString(), 'type': 'prov:QUALIFIED_NAME'};
     };
     Literal.prototype.getProvJSON = function () {
         var ret = {'$': this.value};
