@@ -32,13 +32,25 @@
     };
 
     $.provStoreApi.prototype.request = function (path, data, method, callback, err) {
-        var headers = {'Accept': "application/json"};
+        
+         //Get file ending
+        let  fileEnding = path.split(".").pop();
+
+        //set default application type
+        let applicationType= "json";
+
+        //detect appliaction type based on the provided path
+        if(["xml", "provn", "json", "adjmatrix", "ttl","trig"].indexOf(fileEnding) >= 0 ){
+          applicationType= fileEnding;
+        }
+
+        let headers = {'Accept' : "application/" + applicationType};
         if (this.settings.username && this.settings.key) {
             headers.Authorization = this._authorizationHeader();
         }
 
         $.ajax(this.settings.location + path, {
-            contentType: "application/json",
+            contentType: "application/" + applicationType,
             headers: headers,
             data: data ? method == 'GET' ? data : JSON.stringify(data) : null,
             type: method || 'GET',
